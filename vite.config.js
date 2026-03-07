@@ -27,7 +27,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: viteConfig?.server?.proxy?.api?.target || 'http://localhost:3001',
+        target: process.env.BACKEND_URL || viteConfig?.server?.proxy?.api?.target || 'http://localhost:3001',
         changeOrigin: viteConfig?.server?.proxy?.api?.changeOrigin !== false,
       },
     },

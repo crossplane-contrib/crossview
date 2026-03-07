@@ -9,21 +9,23 @@ import (
 )
 
 type Env struct {
-	ServerPort        string `mapstructure:"SERVER_PORT"`
-	Environment       string `mapstructure:"ENV"`
-	LogOutput         string `mapstructure:"LOG_OUTPUT"`
-	LogLevel          string `mapstructure:"LOG_LEVEL"`
-	DBUsername        string `mapstructure:"DB_USER"`
-	DBPassword        string `mapstructure:"DB_PASS"`
-	DBHost            string `mapstructure:"DB_HOST"`
-	DBPort            string `mapstructure:"DB_PORT"`
-	DBName            string `mapstructure:"DB_NAME"`
-	SessionSecret     string `mapstructure:"SESSION_SECRET"`
-	CORSOrigin        string `mapstructure:"CORS_ORIGIN"`
-	AuthMode          string `mapstructure:"AUTH_MODE"`
-	AuthTrustedHeader string `mapstructure:"AUTH_TRUSTED_HEADER"`
-	AuthCreateUsers   bool   `mapstructure:"AUTH_CREATE_USERS"`
-	AuthDefaultRole   string `mapstructure:"AUTH_DEFAULT_ROLE"`
+	ServerPort                string `mapstructure:"SERVER_PORT"`
+	Environment               string `mapstructure:"ENV"`
+	LogOutput                 string `mapstructure:"LOG_OUTPUT"`
+	LogLevel                  string `mapstructure:"LOG_LEVEL"`
+	DBUsername                string `mapstructure:"DB_USER"`
+	DBPassword                string `mapstructure:"DB_PASS"`
+	DBHost                    string `mapstructure:"DB_HOST"`
+	DBPort                    string `mapstructure:"DB_PORT"`
+	DBName                    string `mapstructure:"DB_NAME"`
+	SessionSecret             string `mapstructure:"SESSION_SECRET"`
+	CORSOrigin                string `mapstructure:"CORS_ORIGIN"`
+	AuthMode                  string `mapstructure:"AUTH_MODE"`
+	AuthTrustedHeader         string `mapstructure:"AUTH_TRUSTED_HEADER"`
+	AuthCreateUsers           bool   `mapstructure:"AUTH_CREATE_USERS"`
+	AuthDefaultRole           string `mapstructure:"AUTH_DEFAULT_ROLE"`
+	KubeServer                string `mapstructure:"KUBE_SERVER"`
+	KubeInsecureSkipTLSVerify bool   `mapstructure:"KUBE_INSECURE_SKIP_TLS_VERIFY"`
 }
 
 func NewEnv() Env {
@@ -89,6 +91,13 @@ func NewEnv() Env {
 		getConfigValue("server.auth.header.trustedHeader", viper.GetString("AUTH_TRUSTED_HEADER"), "X-Auth-User")))
 	env.AuthDefaultRole = getEnvOrDefault("AUTH_DEFAULT_ROLE",
 		getConfigValue("server.auth.header.defaultRole", viper.GetString("AUTH_DEFAULT_ROLE"), "viewer"))
+	env.KubeServer = getEnvOrDefault("KUBE_SERVER",
+		getConfigValue("kube.server", viper.GetString("KUBE_SERVER"), ""))
+	if v := os.Getenv("KUBE_INSECURE_SKIP_TLS_VERIFY"); v != "" {
+		env.KubeInsecureSkipTLSVerify = v == "true" || v == "1"
+	} else if viper.IsSet("kube.insecureSkipTLSVerify") {
+		env.KubeInsecureSkipTLSVerify = viper.GetBool("kube.insecureSkipTLSVerify")
+	}
 	if v := os.Getenv("AUTH_CREATE_USERS"); v != "" {
 		env.AuthCreateUsers = v == "true" || v == "1"
 	} else if viper.IsSet("server.auth.header.createUsers") {

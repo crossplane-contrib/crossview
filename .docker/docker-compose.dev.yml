@@ -1,0 +1,69 @@
+services:
+  frontend:
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile.frontend.dev
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - BACKEND_URL=http://backend:3001
+    volumes:
+      - ..:/app
+      - /app/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile.backend.dev
+    working_dir: /app
+    command: air
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=crossview
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - SESSION_SECRET=dev-secret-change-in-production
+      - CORS_ORIGIN=http://localhost:5173
+      - KUBECONFIG=/root/.kube/config
+      - KUBE_SERVER=${KUBE_SERVER:-}
+      - KUBE_INSECURE_SKIP_TLS_VERIFY=${KUBE_INSECURE_SKIP_TLS_VERIFY:-}
+    volumes:
+      - ../crossview-go-server:/app
+      - go-cache:/root/go/pkg/mod
+      - ~/.kube/config:/root/.kube/config:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17
+    environment:
+      - POSTGRES_DB=crossview
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  go-cache:
+  postgres-dev-data:

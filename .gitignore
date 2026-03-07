@@ -26,3 +26,4 @@ dist-ssr
 # Configuration files (contain sensitive info)
 config/database.json
 config/config.yaml
+.env

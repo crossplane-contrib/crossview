@@ -101,7 +101,12 @@ func (k *KubernetesService) SetContext(ctxName string) error {
 		k.kubeConfig.CurrentContext = ctxName
 		k.currentContext = ctxName
 
-		restConfig, err = clientcmd.NewDefaultClientConfig(*k.kubeConfig, &clientcmd.ConfigOverrides{}).ClientConfig()
+		overrides := &clientcmd.ConfigOverrides{}
+		if k.env.KubeServer != "" {
+			overrides.ClusterInfo.Server = k.env.KubeServer
+		}
+		overrides.ClusterInfo.InsecureSkipTLSVerify = k.env.KubeInsecureSkipTLSVerify
+		restConfig, err = clientcmd.NewDefaultClientConfig(*k.kubeConfig, overrides).ClientConfig()
 		if err != nil {
 			k.failedContexts[targetContext] = true
 			return fmt.Errorf("failed to create rest config: %w", err)
