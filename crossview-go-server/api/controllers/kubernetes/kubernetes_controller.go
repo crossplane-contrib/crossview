@@ -5,21 +5,37 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"crossview-go-server/lib"
+	"crossview-go-server/models"
 	"crossview-go-server/services"
 	"github.com/gin-gonic/gin"
 )
 
 type KubernetesController struct {
-	logger            lib.Logger
-	kubernetesService services.KubernetesServiceInterface
+	logger               lib.Logger
+	kubernetesService    services.KubernetesServiceInterface
+	resourceEventRepo    *models.ResourceEventRepository
+	resourceMetricRepo   *models.ResourceMetricRepository
 }
 
-func NewKubernetesController(logger lib.Logger, kubernetesService services.KubernetesServiceInterface) KubernetesController {
+func NewKubernetesController(
+	logger lib.Logger,
+	kubernetesService services.KubernetesServiceInterface,
+	database lib.Database,
+) KubernetesController {
+	var eventRepo *models.ResourceEventRepository
+	var metricRepo *models.ResourceMetricRepository
+	if database.DB != nil {
+		eventRepo = models.NewResourceEventRepository(database.DB)
+		metricRepo = models.NewResourceMetricRepository(database.DB)
+	}
 	return KubernetesController{
-		logger:            logger,
-		kubernetesService: kubernetesService,
+		logger:             logger,
+		kubernetesService:  kubernetesService,
+		resourceEventRepo:  eventRepo,
+		resourceMetricRepo: metricRepo,
 	}
 }
 
@@ -216,6 +232,182 @@ func (c *KubernetesController) GetManagedResources(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, result)
+}
+
+func (c *KubernetesController) GetResourceTree(ctx *gin.Context) {
+	apiVersion := ctx.Query("apiVersion")
+	kind := ctx.Query("kind")
+	name := ctx.Query("name")
+	namespace := ctx.Query("namespace")
+	contextName := ctx.Query("context")
+
+	if apiVersion == "" || kind == "" || name == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "apiVersion, kind, and name parameters are required"})
+		return
+	}
+
+	if namespace == "undefined" || namespace == "null" {
+		namespace = ""
+	}
+
+	maxDepth := 5
+	if depthStr := ctx.Query("depth"); depthStr != "" {
+		if d, err := strconv.Atoi(depthStr); err == nil && d > 0 {
+			maxDepth = d
+		}
+	}
+
+	tree, err := c.kubernetesService.GetResourceTree(apiVersion, kind, name, namespace, contextName, maxDepth)
+	if err != nil {
+		c.logger.Errorf("Failed to get resource tree: %s", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, tree)
+}
+
+func (c *KubernetesController) GetResourceDrift(ctx *gin.Context) {
+	apiVersion := ctx.Query("apiVersion")
+	kind := ctx.Query("kind")
+	name := ctx.Query("name")
+	namespace := ctx.Query("namespace")
+	contextName := ctx.Query("context")
+
+	if apiVersion == "" || kind == "" || name == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "apiVersion, kind, and name parameters are required"})
+		return
+	}
+
+	if namespace == "undefined" || namespace == "null" {
+		namespace = ""
+	}
+
+	drift, err := c.kubernetesService.GetResourceDrift(apiVersion, kind, name, namespace, contextName)
+	if err != nil {
+		c.logger.Errorf("Failed to get resource drift: %s", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, drift)
+}
+
+func (c *KubernetesController) GetResourceHistory(ctx *gin.Context) {
+	if c.resourceEventRepo == nil {
+		ctx.JSON(http.StatusNotImplemented, gin.H{"error": "History tracking requires database to be enabled"})
+		return
+	}
+
+	apiVersion := ctx.Query("apiVersion")
+	kind := ctx.Query("kind")
+	name := ctx.Query("name")
+	namespace := ctx.Query("namespace")
+	contextName := ctx.Query("context")
+
+	if apiVersion == "" || kind == "" || name == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "apiVersion, kind, and name parameters are required"})
+		return
+	}
+
+	if namespace == "undefined" || namespace == "null" {
+		namespace = ""
+	}
+
+	limit := 50
+	if limitStr := ctx.Query("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	events, err := c.resourceEventRepo.FindByResource(apiVersion, kind, name, namespace, contextName, limit)
+	if err != nil {
+		c.logger.Errorf("Failed to get resource history: %s", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"events": events})
+}
+
+func (c *KubernetesController) GetRecentHistory(ctx *gin.Context) {
+	if c.resourceEventRepo == nil {
+		ctx.JSON(http.StatusNotImplemented, gin.H{"error": "History tracking requires database to be enabled"})
+		return
+	}
+
+	contextName := ctx.Query("context")
+	limit := 20
+	if limitStr := ctx.Query("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	events, err := c.resourceEventRepo.FindRecent(contextName, limit)
+	if err != nil {
+		c.logger.Errorf("Failed to get recent history: %s", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"events": events})
+}
+
+func (c *KubernetesController) GetMetricsSummary(ctx *gin.Context) {
+	if c.resourceMetricRepo == nil {
+		ctx.JSON(http.StatusNotImplemented, gin.H{"error": "Metrics requires database to be enabled"})
+		return
+	}
+
+	contextName := ctx.Query("context")
+	if contextName == "" {
+		contextName = c.kubernetesService.GetCurrentContext()
+	}
+
+	metric, err := c.resourceMetricRepo.FindLatest(contextName)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"message": "No metrics collected yet"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, metric)
+}
+
+func (c *KubernetesController) GetHealthTrend(ctx *gin.Context) {
+	if c.resourceMetricRepo == nil {
+		ctx.JSON(http.StatusNotImplemented, gin.H{"error": "Metrics requires database to be enabled"})
+		return
+	}
+
+	contextName := ctx.Query("context")
+	if contextName == "" {
+		contextName = c.kubernetesService.GetCurrentContext()
+	}
+
+	to := time.Now()
+	from := to.Add(-24 * time.Hour)
+
+	if fromStr := ctx.Query("from"); fromStr != "" {
+		if t, err := time.Parse(time.RFC3339, fromStr); err == nil {
+			from = t
+		}
+	}
+	if toStr := ctx.Query("to"); toStr != "" {
+		if t, err := time.Parse(time.RFC3339, toStr); err == nil {
+			to = t
+		}
+	}
+
+	metrics, err := c.resourceMetricRepo.FindByTimeRange(contextName, from, to, 500)
+	if err != nil {
+		c.logger.Errorf("Failed to get health trend: %s", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"metrics": metrics})
 }
 
 func (c *KubernetesController) AddKubeConfig(ctx *gin.Context) {

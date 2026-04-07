@@ -5,6 +5,7 @@ import (
 	"crossview-go-server/api/routes"
 	"crossview-go-server/lib"
 	"crossview-go-server/models"
+	"crossview-go-server/services"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/bcrypt"
@@ -27,6 +28,7 @@ func (s *ServeCommand) Run() lib.CommandRunner {
 		route routes.Routes,
 		logger lib.Logger,
 		database lib.Database,
+		k8sService services.KubernetesServiceInterface,
 	) {
 		logger.Info("Starting server initialization...")
 
@@ -60,6 +62,15 @@ func (s *ServeCommand) Run() lib.CommandRunner {
 				logger.Panicf("Failed to run database migrations: %v", err)
 			}
 			logger.Info("Database migrations completed successfully")
+
+			eventRepo := models.NewResourceEventRepository(database.DB)
+			if err := eventRepo.AutoMigrate(); err != nil {
+				logger.Warnf("Failed to migrate resource_events table: %v", err)
+			}
+			metricRepo := models.NewResourceMetricRepository(database.DB)
+			if err := metricRepo.AutoMigrate(); err != nil {
+				logger.Warnf("Failed to migrate resource_metrics table: %v", err)
+			}
 			if env.AuthMode == "session" && env.DBEnabled {
 				hasAdmin, err := userRepo.HasAdmin()
 				if err != nil {
@@ -75,6 +86,12 @@ func (s *ServeCommand) Run() lib.CommandRunner {
 				}
 			}
 
+		}
+
+		if database.DB != nil {
+			metricRepoForCollector := models.NewResourceMetricRepository(database.DB)
+			collector := services.NewMetricsCollector(logger, k8sService, metricRepoForCollector, 300, 90)
+			collector.Start()
 		}
 
 		middleware.Setup()
