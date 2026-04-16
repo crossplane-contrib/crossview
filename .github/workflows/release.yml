@@ -40,7 +40,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -222,7 +222,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout code (version bump commit)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.build-and-release.outputs.post_release_sha }}
           fetch-depth: 0
@@ -307,7 +307,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout code (version bump commit)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.build-and-release.outputs.post_release_sha }}
           fetch-depth: 0
@@ -398,7 +398,7 @@ jobs:
           echo "Users can install with: helm install crossview oci://$OCI_REGISTRY/$OCI_REPO --version $CHART_VERSION"
       - name: Checkout gh-pages branch
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.update_github_pages == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: gh-pages
           path: gh-pages
