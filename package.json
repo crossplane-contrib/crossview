@@ -13,7 +13,7 @@
     "changelog:unreleased": "conventional-changelog -p angular -u -o RELEASE_NOTES.md"
   },
   "dependencies": {
-    "@chakra-ui/react": "^3.30.0",
+    "@chakra-ui/react": "^3.34.0",
     "@codemirror/lang-yaml": "^6.1.2",
     "@codemirror/search": "^6.6.0",
     "@emotion/react": "^11.14.0",
