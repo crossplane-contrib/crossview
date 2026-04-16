@@ -330,7 +330,7 @@ jobs:
 
       - name: Set up Helm
         if: github.event.inputs.publish_helm == 'true' || github.event.inputs.update_github_pages == 'true'
-        uses: azure/setup-helm@v3
+        uses: azure/setup-helm@v5
         with:
           version: '3.13.0'
 
