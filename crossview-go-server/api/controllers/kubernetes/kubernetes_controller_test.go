@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"crossview-go-server/lib"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,7 +14,7 @@ func TestKubernetesController_GetStatus(t *testing.T) {
 	logger := setupTestLogger()
 	mockService := setupMockKubernetesService()
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/kubernetes/status", controller.GetStatus)
 
@@ -44,7 +45,7 @@ func TestKubernetesController_GetCurrentContext(t *testing.T) {
 		return "test-context"
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/kubernetes/context", controller.GetCurrentContext)
 
@@ -76,7 +77,7 @@ func TestKubernetesController_GetContexts_Success(t *testing.T) {
 		return expectedContexts, nil
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/kubernetes/contexts", controller.GetContexts)
 
@@ -107,7 +108,7 @@ func TestKubernetesController_GetContexts_Error(t *testing.T) {
 		return nil, http.ErrMissingFile
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/kubernetes/contexts", controller.GetContexts)
 
@@ -133,7 +134,7 @@ func TestKubernetesController_SetContext_Success(t *testing.T) {
 		return "test-context"
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.POST("/api/kubernetes/context", controller.SetContext)
 
@@ -164,7 +165,7 @@ func TestKubernetesController_SetContext_Error(t *testing.T) {
 		return http.ErrMissingFile
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.POST("/api/kubernetes/context", controller.SetContext)
 
@@ -186,7 +187,7 @@ func TestKubernetesController_CheckConnection_WithContext(t *testing.T) {
 		return true, nil
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/kubernetes/connection", controller.CheckConnection)
 
@@ -217,7 +218,7 @@ func TestKubernetesController_CheckConnection_NoContext(t *testing.T) {
 		return ""
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/kubernetes/connection", controller.CheckConnection)
 
@@ -235,7 +236,7 @@ func TestKubernetesController_GetResources_MissingApiVersion(t *testing.T) {
 	logger := setupTestLogger()
 	mockService := setupMockKubernetesService()
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/resources", controller.GetResources)
 
@@ -253,7 +254,7 @@ func TestKubernetesController_GetResources_MissingKind(t *testing.T) {
 	logger := setupTestLogger()
 	mockService := setupMockKubernetesService()
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/resources", controller.GetResources)
 
@@ -281,7 +282,7 @@ func TestKubernetesController_GetResources_Success(t *testing.T) {
 		return expectedResult, nil
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/resources", controller.GetResources)
 
@@ -303,7 +304,7 @@ func TestKubernetesController_GetResources_NotFound(t *testing.T) {
 		return nil, fmt.Errorf("404 Not Found")
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/resources", controller.GetResources)
 
@@ -325,7 +326,7 @@ func TestKubernetesController_GetResources_MissingApiResource(t *testing.T) {
 		return nil, fmt.Errorf("failed to list resources: the server could not find the requested resource")
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/resources", controller.GetResources)
 
@@ -357,7 +358,7 @@ func TestKubernetesController_GetResource_MissingApiVersion(t *testing.T) {
 	logger := setupTestLogger()
 	mockService := setupMockKubernetesService()
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/resource", controller.GetResource)
 
@@ -375,7 +376,7 @@ func TestKubernetesController_GetResource_MissingKind(t *testing.T) {
 	logger := setupTestLogger()
 	mockService := setupMockKubernetesService()
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/resource", controller.GetResource)
 
@@ -393,7 +394,7 @@ func TestKubernetesController_GetResource_MissingName(t *testing.T) {
 	logger := setupTestLogger()
 	mockService := setupMockKubernetesService()
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/resource", controller.GetResource)
 
@@ -423,7 +424,7 @@ func TestKubernetesController_GetResource_Success(t *testing.T) {
 		return expectedResource, nil
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/resource", controller.GetResource)
 
@@ -445,7 +446,7 @@ func TestKubernetesController_GetResource_NotFound(t *testing.T) {
 		return nil, fmt.Errorf("resource not found: Pod/test-pod")
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/resource", controller.GetResource)
 
@@ -463,7 +464,7 @@ func TestKubernetesController_GetEvents_MissingKind(t *testing.T) {
 	logger := setupTestLogger()
 	mockService := setupMockKubernetesService()
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/events", controller.GetEvents)
 
@@ -481,7 +482,7 @@ func TestKubernetesController_GetEvents_MissingName(t *testing.T) {
 	logger := setupTestLogger()
 	mockService := setupMockKubernetesService()
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/events", controller.GetEvents)
 
@@ -510,7 +511,7 @@ func TestKubernetesController_GetEvents_Success(t *testing.T) {
 		return expectedEvents, nil
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/events", controller.GetEvents)
 
@@ -532,7 +533,7 @@ func TestKubernetesController_GetEvents_Error(t *testing.T) {
 		return nil, http.ErrMissingFile
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/events", controller.GetEvents)
 
@@ -568,7 +569,7 @@ func TestKubernetesController_GetManagedResources_Success(t *testing.T) {
 		return expectedResult, nil
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/managed", controller.GetManagedResources)
 
@@ -590,7 +591,7 @@ func TestKubernetesController_GetManagedResources_Error(t *testing.T) {
 		return nil, http.ErrMissingFile
 	}
 
-	controller := NewKubernetesController(logger, mockService)
+	controller := NewKubernetesController(logger, mockService, lib.Database{})
 
 	router.GET("/api/managed", controller.GetManagedResources)
 
