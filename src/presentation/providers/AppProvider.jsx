@@ -240,6 +240,7 @@ export const AppProvider = ({ children }) => {
             localStorage.setItem('workingContexts', JSON.stringify(updated));
             return updated;
           });
+          tryNextWorkingContext(contextNameStr);
         } else {
           setContextErrors(prev => {
             const newErrors = { ...prev };
@@ -265,6 +266,7 @@ export const AppProvider = ({ children }) => {
           localStorage.setItem('workingContexts', JSON.stringify(updated));
           return updated;
         });
+        tryNextWorkingContext(contextNameStr);
       }
     };
     
@@ -274,48 +276,65 @@ export const AppProvider = ({ children }) => {
   const handleContextChange = async (contextName) => {
     try {
       const contextNameStr = typeof contextName === 'string' ? contextName : contextName?.name || contextName;
-      await kubernetesRepository.setContext(contextNameStr);
+      
+      try {
+        await kubernetesRepository.setContext(contextNameStr);
+      } catch (error) {
+        console.warn('Error setting context:', error);
+      }
+      
       setSelectedContext(contextNameStr);
       localStorage.setItem('lastUsedContext', contextNameStr);
+      setContextErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[contextNameStr];
+        return newErrors;
+      });
       
-      const isConnected = await kubernetesRepository.isConnected(contextNameStr);
-      if (isConnected) {
-        setWorkingContexts(prev => {
-          if (!prev.includes(contextNameStr)) {
-            const updated = [...prev, contextNameStr];
+      kubernetesRepository.isConnected(contextNameStr).then(isConnected => {
+        if (isConnected) {
+          setWorkingContexts(prev => {
+            if (!prev.includes(contextNameStr)) {
+              const updated = [...prev, contextNameStr];
+              localStorage.setItem('workingContexts', JSON.stringify(updated));
+              return updated;
+            }
+            return prev;
+          });
+        } else {
+          setContextErrors(prev => ({
+            ...prev,
+            [contextNameStr]: 'Unable to connect to the Kubernetes cluster. Please check your connection settings.'
+          }));
+          setWorkingContexts(prev => {
+            const updated = prev.filter(ctx => ctx !== contextNameStr);
             localStorage.setItem('workingContexts', JSON.stringify(updated));
             return updated;
-          }
-          return prev;
-        });
-        setContextErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors[contextNameStr];
-          return newErrors;
-        });
-      } else {
+          });
+          tryNextWorkingContext(contextNameStr);
+        }
+      }).catch(error => {
+        console.error('Error checking context connection:', error);
         setContextErrors(prev => ({
           ...prev,
-          [contextNameStr]: 'Unable to connect to the Kubernetes cluster. Please check your connection settings.'
+          [contextNameStr]: error.message || 'Unable to connect to the Kubernetes cluster.'
         }));
-        setWorkingContexts(prev => {
-          const updated = prev.filter(ctx => ctx !== contextNameStr);
-          localStorage.setItem('workingContexts', JSON.stringify(updated));
-          return updated;
-        });
-      }
-    } catch (error) {
-      console.error('Failed to set context:', error);
-      const contextNameStr = typeof contextName === 'string' ? contextName : contextName?.name || contextName;
-      setContextErrors(prev => ({
-        ...prev,
-        [contextNameStr]: error.message || 'Failed to connect to the Kubernetes cluster.'
-      }));
-      setWorkingContexts(prev => {
-        const updated = prev.filter(ctx => ctx !== contextNameStr);
-        localStorage.setItem('workingContexts', JSON.stringify(updated));
-        return updated;
       });
+    } catch (error) {
+      console.error('Error switching context:', error);
+    }
+  };
+
+  const tryNextWorkingContext = (failedContext) => {
+    const contextNames = contexts.map(ctx => typeof ctx === 'string' ? ctx : ctx?.name || ctx);
+    const workingCtxList = JSON.parse(localStorage.getItem('workingContexts') || '[]');
+    
+    const availableContexts = contextNames.filter(ctx => ctx !== failedContext && workingCtxList.includes(ctx));
+    
+    if (availableContexts.length > 0) {
+      setTimeout(() => {
+        handleContextChange(availableContexts[0]);
+      }, 500);
     }
   };
 

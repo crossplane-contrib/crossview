@@ -93,11 +93,17 @@ export const ContextSidebar = () => {
                   color={isSelected ? getTextColor(colorMode, 'inverse') : getTextColor(colorMode, 'primary')}
                   _hover={{
                     bg: isSelected ? getAccentColor('blue', 'medium') : getBackgroundColor(colorMode, 'tertiary'),
-                    _dark: { bg: isSelected ? getAccentColor('blue', 'dark') : getBackgroundColor('dark', 'tertiary') }
+                    border: '1px solid',
+                    borderColor: getAccentColor('blue', 'light'),
+                    _dark: { 
+                      bg: isSelected ? getAccentColor('blue', 'dark') : getBackgroundColor('dark', 'tertiary'),
+                      borderColor: getAccentColor('blue', 'primary')
+                    }
                   }}
                   position="relative"
                   transition="all 0.2s"
                   h="44px"
+                  cursor="default"
                   title={name}
                 >
                   <Text fontSize="md" fontWeight="bold">

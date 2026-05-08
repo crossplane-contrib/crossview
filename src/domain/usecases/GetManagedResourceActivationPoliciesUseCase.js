@@ -5,10 +5,10 @@ export class GetManagedResourceActivationPoliciesUseCase {
 
   async execute(context = null) {
     try {
-      const apiVersion = 'apiextensions.crossplane.io/v1alpha1';
-      const kind = 'ManagedResourceActivationPolicy';
-      const mrapsResult = await this.kubernetesRepository.getResources(apiVersion, kind, null, context);
-      const mraps = mrapsResult.items || mrapsResult; // Support both new format and legacy array format
+      const managedResourcesResult = await this.kubernetesRepository.getManagedResources(context);
+      const allResources = managedResourcesResult.items || [];
+      
+      const mraps = allResources.filter(item => item.kind === 'ManagedResourceActivationPolicy');
       const mrapsArray = Array.isArray(mraps) ? mraps : [];
       
       return mrapsArray.map(mrap => ({

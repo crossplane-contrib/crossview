@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"crossview-go-server/lib"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -67,17 +69,13 @@ func buildManagedResourceTargetsFromMRDs(mrdList []map[string]interface{}) []man
 func appendOptionalManagedResourceTargets(resourceTargets []managedResourceTarget) []managedResourceTarget {
 	return append(resourceTargets,
 		managedResourceTarget{apiVersion: "pkg.crossplane.io/v1", kind: "ManagedResourceDefinition", plural: "managedresourcedefinitions"},
-		managedResourceTarget{apiVersion: "pkg.crossplane.io/v1beta1", kind: "ManagedResourceDefinition", plural: "managedresourcedefinitions"},
-		managedResourceTarget{apiVersion: "pkg.crossplane.io/v1alpha1", kind: "ManagedResourceDefinition", plural: "managedresourcedefinitions"},
 		managedResourceTarget{apiVersion: "pkg.crossplane.io/v1", kind: "ManagedResourceActivationPolicy", plural: "managedresourceactivationpolicies"},
-		managedResourceTarget{apiVersion: "pkg.crossplane.io/v1beta1", kind: "ManagedResourceActivationPolicy", plural: "managedresourceactivationpolicies"},
-		managedResourceTarget{apiVersion: "pkg.crossplane.io/v1alpha1", kind: "ManagedResourceActivationPolicy", plural: "managedresourceactivationpolicies"},
 	)
 }
 
 func dedupeManagedResources(items []interface{}) []interface{} {
 	allResources := make([]interface{}, 0, len(items))
-	seenResourceKeys := make(map[string]struct{})
+	seenUIDs := make(map[string]struct{}, len(items))
 
 	for _, item := range items {
 		itemMap, ok := item.(map[string]interface{})
@@ -86,22 +84,18 @@ func dedupeManagedResources(items []interface{}) []interface{} {
 		}
 
 		metadata, _ := itemMap["metadata"].(map[string]interface{})
-		uid, _ := metadata["uid"].(string)
-		name, _ := metadata["name"].(string)
-		namespace, _ := metadata["namespace"].(string)
-		apiVersion, _ := itemMap["apiVersion"].(string)
-		kind, _ := itemMap["kind"].(string)
-
-		resourceKey := uid
-		if resourceKey == "" {
-			resourceKey = fmt.Sprintf("%s|%s|%s|%s", apiVersion, kind, namespace, name)
-		}
-
-		if _, exists := seenResourceKeys[resourceKey]; exists {
+		if metadata == nil {
 			continue
 		}
 
-		seenResourceKeys[resourceKey] = struct{}{}
+		uid, _ := metadata["uid"].(string)
+		if uid != "" {
+			if _, seen := seenUIDs[uid]; seen {
+				continue
+			}
+			seenUIDs[uid] = struct{}{}
+		}
+
 		allResources = append(allResources, itemMap)
 	}
 
@@ -109,11 +103,18 @@ func dedupeManagedResources(items []interface{}) []interface{} {
 }
 
 func (k *KubernetesService) fetchManagedResourceTarget(contextName string, target managedResourceTarget) ([]interface{}, error) {
-	continueToken := ""
 	allItems := make([]interface{}, 0)
+	continueToken := ""
+	pageSize := int64(1000)
+	maxItems := int64(5000)
+	itemCount := int64(0)
 
 	for {
-		result, err := k.GetResources(target.apiVersion, target.kind, "", contextName, target.plural, nil, continueToken)
+		if itemCount >= maxItems {
+			break
+		}
+
+		result, err := k.GetResources(target.apiVersion, target.kind, "", contextName, target.plural, &pageSize, continueToken)
 		if err != nil {
 			return nil, err
 		}
@@ -122,13 +123,13 @@ func (k *KubernetesService) fetchManagedResourceTarget(contextName string, targe
 		if items != nil {
 			for _, item := range items {
 				if itemMap, ok := item.(map[string]interface{}); ok {
-					itemMapCopy := make(map[string]interface{})
-					for key, val := range itemMap {
-						itemMapCopy[key] = val
+					itemMap["apiVersion"] = target.apiVersion
+					itemMap["kind"] = target.kind
+					allItems = append(allItems, itemMap)
+					itemCount++
+					if itemCount >= maxItems {
+						break
 					}
-					itemMapCopy["apiVersion"] = target.apiVersion
-					itemMapCopy["kind"] = target.kind
-					allItems = append(allItems, itemMapCopy)
 				}
 			}
 		}
@@ -165,14 +166,9 @@ func (k *KubernetesService) GetManagedResources(contextName string, forceRefresh
 			if cacheTime, timeExists := k.managedResourcesCacheTime[contextName]; timeExists {
 				if time.Since(cacheTime) < k.managedResourcesCacheTTL {
 					k.logger.Infof("Returning cached managed resources for context: %s", contextName)
-					// Create a copy with fromCache: true
-					result := make(map[string]interface{})
-					for key, value := range cachedResult {
-						result[key] = value
-					}
-					result["fromCache"] = true
+					cachedResult["fromCache"] = true
 					k.mu.RUnlock()
-					return result, nil
+					return cachedResult, nil
 				}
 			}
 		}
@@ -191,22 +187,59 @@ func (k *KubernetesService) GetManagedResources(contextName string, forceRefresh
 		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
 	}
 
-	providersResult, err := k.GetResources("pkg.crossplane.io/v1", "Provider", "", contextName, "", nil, "")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get providers: %w", err)
+	var providers, revisions []interface{}
+	var provErr, revErr error
+	var provWg sync.WaitGroup
+	provWg.Add(2)
+
+	go func() {
+		defer provWg.Done()
+		providersResult, err := k.GetResources("pkg.crossplane.io/v1", "Provider", "", contextName, "", nil, "")
+		if err != nil {
+			provErr = err
+			return
+		}
+		providers, _ = providersResult["items"].([]interface{})
+	}()
+
+	go func() {
+		defer provWg.Done()
+		revisionsResult, err := k.GetResources("pkg.crossplane.io/v1", "ProviderRevision", "", contextName, "", nil, "")
+		if err != nil {
+			revErr = err
+			return
+		}
+		revisions, _ = revisionsResult["items"].([]interface{})
+	}()
+
+	provWg.Wait()
+	if provErr != nil {
+		return nil, fmt.Errorf("failed to get providers: %w", provErr)
 	}
-	providers, _ := providersResult["items"].([]interface{})
+	if revErr != nil {
+		return nil, fmt.Errorf("failed to get provider revisions: %w", revErr)
+	}
 	if providers == nil {
 		providers = []interface{}{}
 	}
-
-	revisionsResult, err := k.GetResources("pkg.crossplane.io/v1", "ProviderRevision", "", contextName, "", nil, "")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get provider revisions: %w", err)
-	}
-	revisions, _ := revisionsResult["items"].([]interface{})
 	if revisions == nil {
 		revisions = []interface{}{}
+	}
+
+	providerNameMap := make(map[string]bool)
+	for _, prov := range providers {
+		provMap, _ := prov.(map[string]interface{})
+		if provMap == nil {
+			continue
+		}
+		provMetadata, _ := provMap["metadata"].(map[string]interface{})
+		if provMetadata == nil {
+			continue
+		}
+		provName, _ := provMetadata["name"].(string)
+		if provName != "" {
+			providerNameMap[provName] = true
+		}
 	}
 
 	revisionToProvider := make(map[string]string)
@@ -229,22 +262,9 @@ func (k *KubernetesService) GetManagedResources(contextName string, forceRefresh
 			ownerKind, _ := owner["kind"].(string)
 			ownerAPIVersion, _ := owner["apiVersion"].(string)
 			ownerName, _ := owner["name"].(string)
-			if ownerKind == "Provider" && ownerAPIVersion == "pkg.crossplane.io/v1" {
-				for _, prov := range providers {
-					provMap, _ := prov.(map[string]interface{})
-					if provMap == nil {
-						continue
-					}
-					provMetadata, _ := provMap["metadata"].(map[string]interface{})
-					if provMetadata == nil {
-						continue
-					}
-					provName, _ := provMetadata["name"].(string)
-					if provName == ownerName {
-						revisionToProvider[revName] = ownerName
-						break
-					}
-				}
+			if ownerKind == "Provider" && ownerAPIVersion == "pkg.crossplane.io/v1" && providerNameMap[ownerName] {
+				revisionToProvider[revName] = ownerName
+				break
 			}
 		}
 	}
@@ -277,22 +297,8 @@ func (k *KubernetesService) GetManagedResources(contextName string, forceRefresh
 			ownerName, _ := owner["name"].(string)
 
 			var providerName string
-			if ownerKind == "Provider" && ownerAPIVersion == "pkg.crossplane.io/v1" {
-				for _, prov := range providers {
-					provMap, _ := prov.(map[string]interface{})
-					if provMap == nil {
-						continue
-					}
-					provMetadata, _ := provMap["metadata"].(map[string]interface{})
-					if provMetadata == nil {
-						continue
-					}
-					provName, _ := provMetadata["name"].(string)
-					if provName == ownerName {
-						providerName = ownerName
-						break
-					}
-				}
+			if ownerKind == "Provider" && ownerAPIVersion == "pkg.crossplane.io/v1" && providerNameMap[ownerName] {
+				providerName = ownerName
 			} else if ownerKind == "ProviderRevision" && ownerAPIVersion == "pkg.crossplane.io/v1" {
 				providerName = revisionToProvider[ownerName]
 			}
@@ -333,6 +339,7 @@ func (k *KubernetesService) GetManagedResources(contextName string, forceRefresh
 
 	resourceTargets := appendOptionalManagedResourceTargets(buildManagedResourceTargetsFromMRDs(mrdList))
 
+	semaphore := make(chan struct{}, 10)
 	resourceChan := make(chan resourceResult, len(resourceTargets))
 	var wg sync.WaitGroup
 
@@ -340,12 +347,18 @@ func (k *KubernetesService) GetManagedResources(contextName string, forceRefresh
 		wg.Add(1)
 		go func(target managedResourceTarget) {
 			defer wg.Done()
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
 			items, err := k.fetchManagedResourceTarget(contextName, target)
 			if err != nil {
-				resourceChan <- resourceResult{items: nil, err: err}
+				if !lib.IsMissingKubernetesResourceError(err) {
+					resourceChan <- resourceResult{items: nil, err: err}
+				}
 				return
 			}
-			resourceChan <- resourceResult{items: items, err: nil}
+			if items != nil && len(items) > 0 {
+				resourceChan <- resourceResult{items: items, err: nil}
+			}
 		}(target)
 	}
 
@@ -362,7 +375,6 @@ func (k *KubernetesService) GetManagedResources(contextName string, forceRefresh
 	}
 	allResources = dedupeManagedResources(allResources)
 
-	// Cache the results
 	result := map[string]interface{}{
 		"items":     allResources,
 		"fromCache": false,

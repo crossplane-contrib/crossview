@@ -30,6 +30,7 @@ export const Providers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [useSplitView, setUseSplitView] = useState(false);
   const gridContainerRef = useRef(null);
+  const loadingContextRef = useRef(null);
 
   // Close resource detail when route changes
   useEffect(() => {
@@ -38,26 +39,43 @@ export const Providers = () => {
   }, [location.pathname]);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const loadProviders = async () => {
       if (!selectedContext) {
         setLoading(false);
         return;
       }
+      
+      const currentContext = selectedContext;
+      loadingContextRef.current = currentContext;
+      
       try {
         setLoading(true);
         setError(null);
         const contextName = typeof selectedContext === 'string' ? selectedContext : selectedContext.name || selectedContext;
         const useCase = new GetProvidersUseCase(kubernetesRepository);
         const data = await useCase.execute(contextName);
-        setProviders(data);
+        
+        if (isMounted && loadingContextRef.current === currentContext) {
+          setProviders(data);
+        }
       } catch (err) {
-        setError(err.message);
+        if (isMounted && loadingContextRef.current === currentContext) {
+          setError(err.message);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted && loadingContextRef.current === currentContext) {
+          setLoading(false);
+        }
       }
     };
 
     loadProviders();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [selectedContext, kubernetesRepository]);
 
   useEffect(() => {

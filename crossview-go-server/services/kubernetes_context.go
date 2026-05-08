@@ -30,6 +30,36 @@ func (k *KubernetesService) getKubeConfigPath() string {
 	return filepath.Join(homeDir, ".kube", "config")
 }
 
+func (k *KubernetesService) normalizeKubeConfigPaths() error {
+	kubeConfigPath := k.getKubeConfigPath()
+	kubeConfigDir := filepath.Dir(kubeConfigPath)
+
+	for clusterName, cluster := range k.kubeConfig.Clusters {
+		if cluster != nil && cluster.CertificateAuthority != "" {
+			certPath := cluster.CertificateAuthority
+			if !filepath.IsAbs(certPath) {
+				absPath := filepath.Join(kubeConfigDir, certPath)
+				cluster.CertificateAuthority = absPath
+				k.kubeConfig.Clusters[clusterName] = cluster
+			}
+		}
+	}
+
+	for authName, authInfo := range k.kubeConfig.AuthInfos {
+		if authInfo != nil {
+			if authInfo.ClientCertificate != "" && !filepath.IsAbs(authInfo.ClientCertificate) {
+				authInfo.ClientCertificate = filepath.Join(kubeConfigDir, authInfo.ClientCertificate)
+			}
+			if authInfo.ClientKey != "" && !filepath.IsAbs(authInfo.ClientKey) {
+				authInfo.ClientKey = filepath.Join(kubeConfigDir, authInfo.ClientKey)
+			}
+			k.kubeConfig.AuthInfos[authName] = authInfo
+		}
+	}
+
+	return nil
+}
+
 func (k *KubernetesService) loadKubeConfig() error {
 	kubeConfigPath := k.getKubeConfigPath()
 	if kubeConfigPath == "" {
@@ -46,12 +76,15 @@ func (k *KubernetesService) loadKubeConfig() error {
 	}
 
 	k.kubeConfig = config
+	if err := k.normalizeKubeConfigPaths(); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (k *KubernetesService) isInCluster() bool {
 	serviceAccountPath := "/var/run/secrets/kubernetes.io/serviceaccount"
-	return fileExists(serviceAccountPath) && 
+	return fileExists(serviceAccountPath) &&
 		fileExists(filepath.Join(serviceAccountPath, "token")) &&
 		fileExists(filepath.Join(serviceAccountPath, "ca.crt"))
 }
@@ -120,7 +153,7 @@ func (k *KubernetesService) SetContext(ctxName string) error {
 	k.clientset = clientset
 	k.dynamicClient = nil
 	delete(k.failedContexts, targetContext)
-	
+
 	// Clear managed resources cache when context changes
 	k.managedResourcesCache = make(map[string]map[string]interface{})
 	k.managedResourcesCacheTime = make(map[string]time.Time)
@@ -135,7 +168,7 @@ func (k *KubernetesService) SetContext(ctxName string) error {
 
 func (k *KubernetesService) IsConnected(ctxName string) (bool, error) {
 	originalContext := k.GetCurrentContext()
-	
+
 	if err := k.SetContext(ctxName); err != nil {
 		return false, err
 	}
@@ -155,7 +188,7 @@ func (k *KubernetesService) IsConnected(ctxName string) (bool, error) {
 	if originalContext != "" && originalContext != ctxName {
 		k.SetContext(originalContext)
 	}
-	
+
 	if err != nil {
 		return false, err
 	}
@@ -281,4 +314,3 @@ func (k *KubernetesService) RemoveContext(ctxName string) error {
 
 	return nil
 }
-
