@@ -1,8 +1,9 @@
-import { Box, Text, Badge, HStack, Grid } from '@chakra-ui/react';
-import { useMemo } from 'react';
+import { Box, Text, Badge, HStack } from '@chakra-ui/react';
+import { useMemo, useEffect, useRef } from 'react';
 import { FiGitMerge, FiAlertCircle } from 'react-icons/fi';
-import CodeMirror from '@uiw/react-codemirror';
+import { EditorView } from '@uiw/react-codemirror';
 import { yaml } from '@codemirror/lang-yaml';
+import { MergeView } from '@codemirror/merge';
 import YAML from 'yaml';
 import { getDriftEntries } from '../../utils/driftUtils.js';
 import { crossviewMirrorTheme } from '../../utils/crossviewMirrorTheme.js';
@@ -17,49 +18,82 @@ function sortKeys(obj) {
   return obj;
 }
 
-function PlanView({ forProvider, atProvider, colorMode }) {
+function filterToSchema(obj, schema) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+  const result = {};
+  for (const key of Object.keys(schema)) {
+    if (!(key in obj)) continue;
+    const sv = schema[key];
+    const ov = obj[key];
+    if (sv && typeof sv === 'object' && !Array.isArray(sv) && ov && typeof ov === 'object' && !Array.isArray(ov)) {
+      result[key] = filterToSchema(ov, sv);
+    } else {
+      result[key] = ov;
+    }
+  }
+  return result;
+}
+
+function SplitDiffView({ forProvider, atProvider, colorMode }) {
+  const ref = useRef(null);
+  const viewRef = useRef(null);
   const isDark = colorMode === 'dark';
 
+  const atYaml = useMemo(
+    () => YAML.stringify(sortKeys(filterToSchema(atProvider || {}, forProvider || {})), { indent: 2, simpleKeys: true }),
+    [atProvider, forProvider]
+  );
   const forYaml = useMemo(
     () => YAML.stringify(sortKeys(forProvider || {}), { indent: 2, simpleKeys: true }),
     [forProvider]
   );
-  const atYaml = useMemo(
-    () => YAML.stringify(sortKeys(atProvider || {}), { indent: 2, simpleKeys: true }),
-    [atProvider]
-  );
+
+  useEffect(() => {
+    if (!ref.current) return;
+    if (viewRef.current) { viewRef.current.destroy(); viewRef.current = null; }
+
+    const extensions = [
+      yaml(),
+      EditorView.lineWrapping,
+      EditorView.editable.of(false),
+      ...(isDark ? [crossviewMirrorTheme] : []),
+      EditorView.theme({ '&': { fontSize: '0.75rem', lineHeight: '1.5' } }),
+    ];
+
+    viewRef.current = new MergeView({
+      parent: ref.current,
+      a: { doc: atYaml, extensions },
+      b: { doc: forYaml, extensions },
+      highlightChanges: true,
+      gutter: true,
+      collapseUnchanged: { minSize: 4, margin: 2 },
+    });
+
+    return () => { if (viewRef.current) { viewRef.current.destroy(); viewRef.current = null; } };
+  }, [atYaml, forYaml, isDark]);
 
   return (
-    <Grid templateColumns="1fr 1fr" gap={4}>
-      <Box>
-        <Text fontSize="xs" fontWeight="semibold" mb={2} fontFamily="mono" color={getTextColor(colorMode, 'secondary')}>
-          status.atProvider — current state
-        </Text>
-        <Box borderRadius="md" overflow="hidden">
-          <CodeMirror
-            value={atYaml}
-            extensions={[yaml()]}
-            theme={isDark ? crossviewMirrorTheme : undefined}
-            readOnly
-            style={{ fontSize: '0.75rem', lineHeight: '1.5' }}
-          />
-        </Box>
-      </Box>
-      <Box>
-        <Text fontSize="xs" fontWeight="semibold" mb={2} fontFamily="mono" color={getTextColor(colorMode, 'secondary')}>
-          spec.forProvider — desired state
-        </Text>
-        <Box borderRadius="md" overflow="hidden">
-          <CodeMirror
-            value={forYaml}
-            extensions={[yaml()]}
-            theme={isDark ? crossviewMirrorTheme : undefined}
-            readOnly
-            style={{ fontSize: '0.75rem', lineHeight: '1.5' }}
-          />
-        </Box>
-      </Box>
-    </Grid>
+    <Box>
+      <HStack mb={2} fontSize="xs" color={getTextColor(colorMode, 'secondary')}>
+        <Text fontFamily="mono" fontWeight="semibold" flex={1} textAlign="center">status.atProvider (current)</Text>
+        <Text fontFamily="mono" fontWeight="semibold" flex={1} textAlign="center">spec.forProvider (desired)</Text>
+      </HStack>
+      <Box
+        ref={ref}
+        borderRadius="md"
+        overflow="hidden"
+        border="1px solid"
+        borderColor={getBorderColor(colorMode)}
+        sx={{
+          '.cm-mergeView': { width: '100%' },
+          '.cm-mergeViewEditor': { flex: 1 },
+          '.cm-deletedChunk': { backgroundColor: 'rgba(248,81,73,0.15)' },
+          '.cm-deletedChunk .cm-deletedText': { backgroundColor: 'rgba(248,81,73,0.35)' },
+          '.cm-changedChunk': { backgroundColor: 'rgba(56,139,253,0.12)' },
+          '.cm-changedText': { backgroundColor: 'rgba(56,139,253,0.35)' },
+        }}
+      />
+    </Box>
   );
 }
 
@@ -106,20 +140,19 @@ export const ResourceDrift = ({ fullResource }) => {
 
   return (
     <Box p={4} flex={1} overflowY="auto">
-      {/* Summary bar */}
       <Box p={3} mb={4} borderRadius="md" bg={getBackgroundColor(colorMode, 'secondary')} border="1px solid" borderColor={getBorderColor(colorMode)}>
         <HStack spacing={2} flexWrap="wrap" gap={2}>
           {realDiff > 0 ? <FiAlertCircle size={14} color="#dd6b20" /> : <FiGitMerge size={14} color="#38a169" />}
           <Text fontSize="sm" fontWeight="semibold" color={getTextColor(colorMode, 'primary')}>
             {realDiff === 0 ? 'In sync — no drift detected' : `${realDiff} field${realDiff !== 1 ? 's' : ''} differ`}
           </Text>
-          {toAdd.length   > 0 && <Badge colorScheme="blue"   fontSize="2xs">{toAdd.length} to add</Badge>}
-          {changed.length > 0 && <Badge colorScheme="orange" fontSize="2xs">{changed.length} changed</Badge>}
-          {providerOnlyCount > 0 && <Badge colorScheme="gray" fontSize="2xs">{providerOnlyCount} provider-managed</Badge>}
+          {toAdd.length      > 0 && <Badge colorScheme="blue"   fontSize="2xs">{toAdd.length} to add</Badge>}
+          {changed.length    > 0 && <Badge colorScheme="orange" fontSize="2xs">{changed.length} changed</Badge>}
+          {providerOnlyCount > 0 && <Badge colorScheme="gray"   fontSize="2xs">{providerOnlyCount} provider-managed</Badge>}
         </HStack>
       </Box>
 
-      <PlanView forProvider={forProvider} atProvider={atProvider} colorMode={colorMode} />
+      <SplitDiffView forProvider={forProvider} atProvider={atProvider} colorMode={colorMode} />
     </Box>
   );
 };
