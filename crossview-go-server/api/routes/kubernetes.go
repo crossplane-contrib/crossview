@@ -50,6 +50,12 @@ func (r KubernetesRoutes) Setup() {
 		api.GET("/resource", r.authMiddleware.Handler(), r.controller.GetResource)
 		api.GET("/events", r.authMiddleware.Handler(), r.controller.GetEvents)
 		api.GET("/managed", r.authMiddleware.Handler(), r.controller.GetManagedResources)
+		api.GET("/resource/tree", r.authMiddleware.Handler(), r.controller.GetResourceTree)
+		api.GET("/resource/drift", r.authMiddleware.Handler(), r.controller.GetResourceDrift)
+		api.GET("/resource/history", r.authMiddleware.Handler(), r.controller.GetResourceHistory)
+		api.GET("/history/recent", r.authMiddleware.Handler(), r.controller.GetRecentHistory)
+		api.GET("/metrics/summary", r.authMiddleware.Handler(), r.controller.GetMetricsSummary)
+		api.GET("/metrics/health-trend", r.authMiddleware.Handler(), r.controller.GetHealthTrend)
 		api.GET("/watch", r.authMiddleware.Handler(), r.watchController.WatchResources)
 	}
 }

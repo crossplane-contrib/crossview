@@ -16,6 +16,8 @@ import { ResourceYAML } from './ResourceYAML.jsx';
 import { ResourceStatus } from './ResourceStatus.jsx';
 import { ResourceRelations } from './ResourceRelations.jsx';
 import { ResourceEvents } from './ResourceEvents.jsx';
+import { ResourceDrift } from './ResourceDrift.jsx';
+import { ResourceHistory } from './ResourceHistory.jsx';
 import { getBorderColor } from '../../utils/theme.js';
 
 export const ResourceDetails = ({ resource, onClose, onNavigate, onBack }) => {
@@ -206,6 +208,14 @@ export const ResourceDetails = ({ resource, onClose, onNavigate, onBack }) => {
                   colorMode={colorMode}
                   onNavigate={handleRelatedClick}
                 />
+              )}
+
+              {activeTab === 'drift' && (
+                <ResourceDrift resource={resource} fullResource={fullResource} />
+              )}
+
+              {activeTab === 'history' && (
+                <ResourceHistory resource={resource} fullResource={fullResource} />
               )}
             </Box>
           </Box>

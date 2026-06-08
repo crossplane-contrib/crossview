@@ -1,8 +1,10 @@
 package kubernetes
 
 import (
-	"github.com/gin-gonic/gin"
 	"crossview-go-server/lib"
+	"crossview-go-server/services"
+
+	"github.com/gin-gonic/gin"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -35,6 +37,8 @@ type MockKubernetesService struct {
 	GetResourceFunc          func(apiVersion, kind, name, namespace, contextName, plural string) (map[string]interface{}, error)
 	GetEventsFunc            func(kind, name, namespace, contextName string) ([]map[string]interface{}, error)
 	GetManagedResourcesFunc  func(contextName string, forceRefresh bool) (map[string]interface{}, error)
+	GetResourceTreeFunc      func(apiVersion, kind, name, namespace, contextName string, maxDepth int) (*services.TreeNode, error)
+	GetResourceDriftFunc     func(apiVersion, kind, name, namespace, contextName string) (map[string]interface{}, error)
 }
 
 func (m MockKubernetesService) SetContext(ctxName string) error {
@@ -131,5 +135,19 @@ func (m MockKubernetesService) ClearManagedResourcesCache(contextName string) {
 	if m.ClearManagedResourcesCacheFunc != nil {
 		m.ClearManagedResourcesCacheFunc(contextName)
 	}
+}
+
+func (m MockKubernetesService) GetResourceTree(apiVersion, kind, name, namespace, contextName string, maxDepth int) (*services.TreeNode, error) {
+	if m.GetResourceTreeFunc != nil {
+		return m.GetResourceTreeFunc(apiVersion, kind, name, namespace, contextName, maxDepth)
+	}
+	return nil, nil
+}
+
+func (m MockKubernetesService) GetResourceDrift(apiVersion, kind, name, namespace, contextName string) (map[string]interface{}, error) {
+	if m.GetResourceDriftFunc != nil {
+		return m.GetResourceDriftFunc(apiVersion, kind, name, namespace, contextName)
+	}
+	return map[string]interface{}{"hasDrift": false}, nil
 }
 

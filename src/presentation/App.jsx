@@ -15,6 +15,8 @@ import { Resources } from './pages/Resources.jsx';
 import { ResourceKind } from './pages/ResourceKind.jsx';
 import { CompositeResourceKind } from './pages/CompositeResourceKind.jsx';
 import { Search } from './pages/Search.jsx';
+import { Policies } from './pages/Policies.jsx';
+import { Analytics } from './pages/Analytics.jsx';
 import { useAppContext } from './providers/AppProvider.jsx';
 import { OnWatchResourcesProvider } from './providers/OnWatchResourcesProvider.jsx';
 import { Box, Text, VStack, Icon, Button } from '@chakra-ui/react';
@@ -133,6 +135,8 @@ function App() {
                 <Route path="composite-resources/:kind" element={<CompositeResourceKind />} />
                 <Route path="claims" element={<Claims />} />
                 <Route path="managed-resources" element={<Resources />} />
+                <Route path="policies" element={<Policies />} />
+                <Route path="analytics" element={<Analytics />} />
                 <Route path="resources" element={<Navigate to="/managed-resources" replace />} />
                 <Route path="resources/:kind" element={<ResourceKind />} />
                 <Route path="search" element={<Search />} />

@@ -6,7 +6,7 @@ import {
   Button,
   Image,
 } from '@chakra-ui/react';
-import { FiChevronLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiLayout, FiSettings, FiPackage, FiFileText, FiLayers, FiBox, FiBook, FiServer, FiUsers, FiSliders, FiGrid, FiDatabase, FiCode, FiGithub, FiShield } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiLayout, FiSettings, FiPackage, FiFileText, FiLayers, FiBox, FiBook, FiServer, FiUsers, FiSliders, FiGrid, FiDatabase, FiCode, FiGithub, FiShield, FiBarChart2 } from 'react-icons/fi';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '../../providers/AppProvider.jsx';
@@ -152,6 +152,7 @@ export const Sidebar = ({ onToggle, onResize }) => {
     { id: 'compositions', label: 'Compositions', icon: FiLayers, path: '/compositions', tooltip: 'Templates that define how to compose resources' },
     { id: 'mrds', label: 'MRDs', icon: FiLayers, path: '/mrds', tooltip: 'Managed Resource Definitions - available managed resource types from providers' },
     { id: 'mraps', label: 'MRAPs', icon: FiShield, path: '/mraps', tooltip: 'Managed Resource Activation Policies - control managed resource activation' },
+    { id: 'policies', label: 'Policies', icon: FiShield, path: '/policies', tooltip: 'Crossplane validation policies' },
     // Crossplane Instances (created resources)
     { 
       id: 'composite-resources', 
@@ -168,6 +169,7 @@ export const Sidebar = ({ onToggle, onResize }) => {
     },
     { id: 'claims', label: 'Claims', icon: FiFileText, path: '/claims', tooltip: 'User-facing abstractions that create Composite Resources' },
     { id: 'managed-resources', label: 'Managed Resources', icon: FiServer, path: '/managed-resources', tooltip: 'Kubernetes resources created and managed by Crossplane (Deployments, Services, etc.)' },
+    { id: 'analytics', label: 'Analytics', icon: FiBarChart2, path: '/analytics', tooltip: 'Resource metrics, health trends, and usage analytics' },
     { 
       id: 'settings', 
       label: 'Settings', 

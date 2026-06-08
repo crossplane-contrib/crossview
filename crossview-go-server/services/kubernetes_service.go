@@ -28,6 +28,8 @@ type KubernetesServiceInterface interface {
 	GetResource(apiVersion, kind, name, namespace, contextName, plural string) (map[string]interface{}, error)
 	GetEvents(kind, name, namespace, contextName string) ([]map[string]interface{}, error)
 	GetManagedResources(contextName string, forceRefresh bool) (map[string]interface{}, error)
+	GetResourceTree(apiVersion, kind, name, namespace, contextName string, maxDepth int) (*TreeNode, error)
+	GetResourceDrift(apiVersion, kind, name, namespace, contextName string) (map[string]interface{}, error)
 }
 
 type KubernetesService struct {
