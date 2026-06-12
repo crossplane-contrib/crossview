@@ -1,0 +1,67 @@
+name: Sync Helm Version Choices
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update version choices in helm-release.yml
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'EOF'
+          import subprocess, re, sys
+
+          result = subprocess.run(
+              ['gh', 'release', 'list', '--limit', '20', '--json', 'tagName', '--jq', '.[].tagName'],
+              capture_output=True, text=True
+          )
+          releases = [r.strip() for r in result.stdout.strip().split('\n') if r.strip()]
+
+          if not releases:
+              print("No releases found, nothing to update.")
+              sys.exit(0)
+
+          with open('.github/workflows/helm-release.yml') as f:
+              content = f.read()
+
+          options_block = (
+              "        options:\n"
+              + "\n".join(f"          - {r}" for r in releases)
+              + "\n"
+          )
+
+          new_content = re.sub(
+              r'        options:\n(?:          - .+\n)+',
+              options_block,
+              content
+          )
+
+          if new_content == content:
+              print("No changes needed.")
+              sys.exit(0)
+
+          with open('.github/workflows/helm-release.yml', 'w') as f:
+              f.write(new_content)
+
+          print(f"Updated with {len(releases)} versions: {releases}")
+          EOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/helm-release.yml
+          git diff --staged --quiet && echo "No changes to commit." || \
+            git commit -m "ci: sync helm version choices from releases" && git push
