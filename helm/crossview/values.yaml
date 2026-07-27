@@ -18,7 +18,18 @@ app:
   name: crossview
   port: 3001
   replicas: 1
+  # Controls spec.template.spec.automountServiceAccountToken.
+  # Leave null to inherit the Kubernetes default (true). Set to false when
+  # using an external auth mechanism (e.g. Azure Workload Identity) and the
+  # in-cluster SA token would otherwise trigger local-cluster fallback paths.
+  automountServiceAccountToken: null
   extraEnv: []
+  extraVolumes: []
+  # Extra volumeMounts attached to the main crossview container (list of VolumeMount).
+  extraVolumeMounts: []
+  # Extra initContainers appended after the built-in `wait-for-db` init container
+  # (list of Container). If database.enabled is false, these are still emitted.
+  extraInitContainers: []
   securityContext:
     runAsNonRoot: true
     runAsUser: 1000

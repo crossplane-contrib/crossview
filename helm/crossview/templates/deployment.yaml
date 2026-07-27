@@ -34,12 +34,16 @@ spec:
       {{- if .Values.serviceAccount.create }}
       serviceAccountName: {{ .Values.serviceAccount.name | default (include "crossview.fullname" .) }}
       {{- end }}
+      {{- if ne .Values.app.automountServiceAccountToken nil }}
+      automountServiceAccountToken: {{ .Values.app.automountServiceAccountToken }}
+      {{- end }}
       {{- with .Values.app.securityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.database.enabled }}
+      {{- if or .Values.database.enabled .Values.app.extraInitContainers }}
       initContainers:
+        {{- if .Values.database.enabled }}
         - name: wait-for-db
           image: "{{ .Values.database.image.repository }}:{{ .Values.database.image.tag }}"
           {{- with .Values.database.containerSecurityContext }}
@@ -76,6 +80,10 @@ spec:
             - name: DB_PASS
               {{- $dbPasswordValueFrom | nindent 14 }}
             {{- end }}
+        {{- end }}
+        {{- with .Values.app.extraInitContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -322,9 +330,15 @@ spec:
           volumeMounts:
             - name: logs
               mountPath: /app/logs
+            {{- with .Values.app.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
       volumes:
         - name: logs
           emptyDir: {}
+        {{- with .Values.app.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- with .Values.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
