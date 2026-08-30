@@ -139,6 +139,11 @@ func (k *KubernetesService) SetContext(ctxName string) error {
 			k.failedContexts[targetContext] = true
 			return fmt.Errorf("failed to create rest config: %w", err)
 		}
+
+		if err := k.applyAzureWorkloadIdentity(restConfig, ctxName); err != nil {
+			k.failedContexts[targetContext] = true
+			return fmt.Errorf("failed to apply Azure workload identity: %w", err)
+		}
 	}
 
 	restConfig.WarningHandler = rest.NoWarnings{}
