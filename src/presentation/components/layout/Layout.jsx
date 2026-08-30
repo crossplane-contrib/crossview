@@ -50,15 +50,17 @@ export const Layout = ({ children }) => {
       setShowContextSidebar(false);
       return;
     }
-    const updateContextSidebarWidth = () => {
+    const updateContextSidebarWidth = (event) => {
       const saved = localStorage.getItem('contextSidebarCollapsed');
       const isCollapsed = saved === 'true';
-      setContextSidebarWidth(isCollapsed ? 0 : 60);
+      const eventWidth = Number(event?.detail?.width);
+      const resolvedWidth = Number.isFinite(eventWidth) && eventWidth > 0 ? eventWidth : 60;
+      setContextSidebarWidth(isCollapsed ? 0 : resolvedWidth);
       setShowContextSidebar(!isCollapsed);
     };
     updateContextSidebarWidth();
-    const handleWidthChange = () => {
-      updateContextSidebarWidth();
+    const handleWidthChange = (event) => {
+      updateContextSidebarWidth(event);
     };
     window.addEventListener('contextSidebarWidthChanged', handleWidthChange);
     return () => window.removeEventListener('contextSidebarWidthChanged', handleWidthChange);

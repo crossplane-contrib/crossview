@@ -25,6 +25,11 @@ tests:
           path: data.OIDC_ISSUER
       - exists:
           path: data.SAML_ENABLED
+      - exists:
+        path: data.CONTEXT_ALIASES
+      - equal:
+          path: data.CONTEXT_ALIASES
+          value: "{}"
 
   - it: should not create ConfigMap when config.ref is set
     set:
@@ -141,6 +146,21 @@ tests:
       - equal:
           path: data.OIDC_CLIENT_ID
           value: "my-client"
+
+  - it: should render context aliases into env JSON
+    set:
+      config:
+        server:
+          contextAliases:
+            kind-kind: KIND
+            dev-cluster: DEV
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+    asserts:
+      - equal:
+          path: data.CONTEXT_ALIASES
+          value: '{"dev-cluster":"DEV","kind-kind":"KIND"}'
 
   - it: should render an empty OIDC_ISSUER when issuer is not set (skips discovery)
     set:

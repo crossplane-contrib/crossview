@@ -189,6 +189,12 @@
           "type": "object",
           "properties": {
             "port": { "type": "integer", "default": 3001 },
+            "contextAliases": {
+              "type": "object",
+              "description": "Optional mapping of kube context name to short UI label.",
+              "additionalProperties": { "type": "string" },
+              "default": {}
+            },
             "auth": {
               "type": "object",
               "properties": {

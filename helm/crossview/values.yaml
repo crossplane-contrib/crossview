@@ -144,6 +144,9 @@ config:
         key: ""
   server:
     port: 3001
+    # Optional short labels for kube contexts shown in UI badges.
+    # Example: { kind-kind: KIND, dev-cluster: DEV }
+    contextAliases: {}
     auth:
       mode: session
       trustedHeader: X-Auth-User

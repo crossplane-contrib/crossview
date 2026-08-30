@@ -1,27 +1,66 @@
 import {
   Box,
   VStack,
-  HStack,
   Text,
   Icon,
 } from '@chakra-ui/react';
 import { FiAlertCircle, FiPlus } from 'react-icons/fi';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../providers/AppProvider.jsx';
 import { getBorderColor, getBackgroundColor, getTextColor, getAccentColor, getStatusColor } from '../../utils/theme.js';
+
+const MIN_CONTEXT_SIDEBAR_WIDTH = 60;
+const MAX_CONTEXT_SIDEBAR_WIDTH = 140;
+const SIDEBAR_LABEL_CHAR_WIDTH = 7;
+const MAX_CONTEXT_BADGE_LABEL_LENGTH = 12;
 
 export const ContextSidebar = () => {
   const { contexts, selectedContext, setSelectedContext, colorMode, isInClusterMode, contextAliases } = useAppContext();
   const navigate = useNavigate();
 
-  if (isInClusterMode) {
-    return null;
-  }
-
   const getFirstLetter = (name) => {
     if (!name) return '?';
     return name.charAt(0).toUpperCase();
   };
+
+  const getContextBadgeLabel = (name) => {
+    const rawLabel = (contextAliases[name] || getFirstLetter(name) || '?').trim();
+    if (rawLabel.length <= MAX_CONTEXT_BADGE_LABEL_LENGTH) {
+      return rawLabel;
+    }
+    return `${rawLabel.slice(0, MAX_CONTEXT_BADGE_LABEL_LENGTH - 1)}...`;
+  };
+
+  const contextSidebarWidth = useMemo(() => {
+    if (!contexts || contexts.length === 0) {
+      return MIN_CONTEXT_SIDEBAR_WIDTH;
+    }
+
+    const maxLabelLength = contexts.reduce((maxLen, context) => {
+      const name = typeof context === 'string' ? context : context.name || context;
+      const rawLabel = (contextAliases[name] || getFirstLetter(name) || '?').trim();
+      return Math.max(maxLen, Math.min(rawLabel.length, MAX_CONTEXT_BADGE_LABEL_LENGTH));
+    }, 1);
+
+    return Math.min(
+      MAX_CONTEXT_SIDEBAR_WIDTH,
+      Math.max(MIN_CONTEXT_SIDEBAR_WIDTH, 24 + (maxLabelLength * SIDEBAR_LABEL_CHAR_WIDTH)),
+    );
+  }, [contexts, contextAliases]);
+
+  useEffect(() => {
+    if (isInClusterMode) {
+      return;
+    }
+    window.dispatchEvent(new CustomEvent('contextSidebarWidthChanged', {
+      detail: { width: contextSidebarWidth },
+    }));
+  }, [contextSidebarWidth, isInClusterMode]);
+
+  if (isInClusterMode) {
+    return null;
+  }
 
   const contextName = typeof selectedContext === 'string' ? selectedContext : selectedContext?.name || selectedContext;
 
@@ -30,7 +69,7 @@ export const ContextSidebar = () => {
 
   return (
     <Box
-      w="60px"
+      w={`${contextSidebarWidth}px`}
       h="100vh"
       bg={bgColor}
       borderRight="1px solid"
@@ -73,7 +112,8 @@ export const ContextSidebar = () => {
               const name = typeof context === 'string' ? context : context.name || context;
               const isSelected = contextName === name;
               const hasError = false;
-              const label = contextAliases[name] || getFirstLetter(name);
+              const rawAlias = contextAliases[name] || '';
+              const label = getContextBadgeLabel(name);
               return (
                 <Box
                   key={name}
@@ -101,7 +141,7 @@ export const ContextSidebar = () => {
                   transition="all 0.2s"
                   h="44px"
                   cursor="default"
-                  title={name}
+                  title={rawAlias ? `${name} (${rawAlias})` : name}
                 >
                   <Text fontSize={label.length > 3 ? 'xs' : 'md'} fontWeight="bold">
                     {label}

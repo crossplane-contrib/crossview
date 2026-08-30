@@ -14,6 +14,8 @@ import { Container } from '../components/common/Container.jsx';
 import { Dialog } from '../components/common/Dialog.jsx';
 import { useAppContext } from '../providers/AppProvider.jsx';
 
+const MAX_CONTEXT_BADGE_LABEL_LENGTH = 8;
+
 export const ContextManagement = () => {
   const { contexts, kubernetesRepository, getKubernetesContextsUseCase, selectedContext, colorMode, contextAliases } = useAppContext();
   const [kubeConfigText, setKubeConfigText] = useState('');
@@ -26,6 +28,16 @@ export const ContextManagement = () => {
   const [contextToDelete, setContextToDelete] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const fileInputRef = useRef(null);
+
+  const getFirstLetter = (name) => (name ? name.charAt(0).toUpperCase() : '?');
+
+  const getContextBadgeLabel = (name) => {
+    const rawLabel = (contextAliases[name] || getFirstLetter(name) || '?').trim();
+    if (rawLabel.length <= MAX_CONTEXT_BADGE_LABEL_LENGTH) {
+      return rawLabel;
+    }
+    return `${rawLabel.slice(0, MAX_CONTEXT_BADGE_LABEL_LENGTH - 1)}...`;
+  };
 
   const handleFileSelect = async (event) => {
     const file = event.target.files?.[0];
@@ -58,7 +70,6 @@ export const ContextManagement = () => {
 
       const hasApiVersion = lines.some(line => line.includes('apiVersion:'));
       const hasKind = lines.some(line => line.includes('kind:'));
-      const hasContexts = lines.some(line => line.includes('contexts:'));
 
       if (!hasApiVersion || !hasKind) {
         setValidationError('Invalid kubeconfig format: missing apiVersion or kind');
@@ -155,7 +166,7 @@ export const ContextManagement = () => {
   const refreshContexts = async () => {
     setRefreshing(true);
     try {
-      const contextsList = await getKubernetesContextsUseCase.execute();
+      await getKubernetesContextsUseCase.execute();
       window.dispatchEvent(new CustomEvent('contextsUpdated'));
     } catch (err) {
       console.warn('Failed to refresh contexts:', err);
@@ -200,8 +211,8 @@ export const ContextManagement = () => {
                 const name = typeof contextName === 'string' ? contextName : contextName?.name || contextName;
                 const isSelected = selectedContext === name;
                 const hasError = false;
-                const getFirstLetter = (n) => n ? n.charAt(0).toUpperCase() : '?';
-                const label = contextAliases[name] || getFirstLetter(name);
+                const rawAlias = contextAliases[name] || '';
+                const label = getContextBadgeLabel(name);
 
                 return (
                   <Box
@@ -240,6 +251,7 @@ export const ContextManagement = () => {
                           fontWeight="bold"
                           fontSize={label.length > 3 ? 'sm' : 'lg'}
                           flexShrink={0}
+                          title={rawAlias || name}
                         >
                           {label}
                         </Box>
