@@ -77,6 +77,34 @@ SESSION_SECRET=your-secret # Session encryption key (generate with: openssl rand
 CORS_ORIGIN=https://crossview.example.com  # Public root URL of this instance.
                            # Required when using SSO: after login the user is redirected here.
                            # Defaults to http://localhost:5173 — must be overridden in production.
+CONTEXT_ALIASES='{"kind-kind":"KIND","dev-cluster":"DEV"}'
+                           # Optional JSON map of kube context name -> short UI label.
+```
+
+### Context Aliases
+
+You can define short labels for long Kubernetes context names. These labels are shown in UI badges.
+
+Environment variable format (preferred for containers):
+
+```bash
+CONTEXT_ALIASES='{"kind-kind":"KIND","dev-cluster":"DEV"}'
+```
+
+Config file format:
+
+```yaml
+server:
+  contextAliases:
+    kind-kind: KIND
+    dev-cluster: DEV
+```
+
+Legacy config key is also supported for backward compatibility:
+
+```yaml
+crossview-context-aliases:
+  - kind-kind: KIND
 ```
 
 ### Authentication Modes

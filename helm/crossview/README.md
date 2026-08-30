@@ -91,6 +91,7 @@ The following table lists the configurable parameters and their default values:
 | `app.replicas`                   | Number of replicas                                                          | `1`                                        |
 | `database.enabled`               | Enable bundled PostgreSQL                                                   | `true`                                     |
 | `config.ref`                     | Reference existing ConfigMap (skips chart-generated config)                 | `""`                                       |
+| `config.server.contextAliases`   | Map of kube context names to short UI labels                                | `{}`                                        |
 | `config.server.auth.mode`        | Auth mode: `session`, `header`, or `none`                                   | `session`                                  |
 | `secrets.adminUsername`          | Admin username (plain string = chart creates it in secret)                  | `"admin"`                                  |
 | `secrets.adminPassword`          | Admin password (plain string = chart creates it in secret)                  | `"ChangeThisImmediately2026!"`             |
@@ -169,6 +170,25 @@ helm install crossview ./helm/crossview \
   --set secrets.dbPassword.secretKeyRef.name=prod-db-secrets \
   --set secrets.dbPassword.secretKeyRef.key=password \
   --set secrets.sessionSecret=your-session-secret
+```
+
+## Context Alias Labels
+
+To display short labels for long context names in the UI, set `config.server.contextAliases`:
+
+```yaml
+config:
+  server:
+    contextAliases:
+      kind-kind: KIND
+      dev-cluster: DEV
+```
+
+Equivalent CLI example:
+
+```bash
+helm upgrade --install crossview ./helm/crossview \
+  --set-json 'config.server.contextAliases={"kind-kind":"KIND","dev-cluster":"DEV"}'
 ```
 
 ## Ingress Configuration

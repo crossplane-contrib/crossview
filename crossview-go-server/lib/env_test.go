@@ -2,6 +2,7 @@ package lib
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -59,3 +60,38 @@ func TestGetEnvOrDefault(t *testing.T) {
 	}
 }
 
+func TestNewEnv_LoadsContextAliasesFromServerConfig(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "config.yaml")
+	config := "server:\n  contextAliases:\n    kind-kind: my-kind\n    dev: DEV\n"
+	if err := os.WriteFile(configPath, []byte(config), 0644); err != nil {
+		t.Fatalf("failed to write temp config: %v", err)
+	}
+
+	os.Setenv("CONFIG_PATH", configPath)
+	os.Unsetenv("CROSSVIEW_CONTEXT_ALIASES")
+	defer os.Unsetenv("CONFIG_PATH")
+
+	env := NewEnv()
+	if env.ContextAliases != "{\"dev\":\"DEV\",\"kind-kind\":\"my-kind\"}" && env.ContextAliases != "{\"kind-kind\":\"my-kind\",\"dev\":\"DEV\"}" {
+		t.Errorf("unexpected context aliases value: %s", env.ContextAliases)
+	}
+}
+
+func TestNewEnv_LoadsContextAliasesFromLegacyConfigKey(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "config.yaml")
+	config := "crossview-context-aliases:\n  - kind-kind: my-kind\n"
+	if err := os.WriteFile(configPath, []byte(config), 0644); err != nil {
+		t.Fatalf("failed to write temp config: %v", err)
+	}
+
+	os.Setenv("CONFIG_PATH", configPath)
+	os.Unsetenv("CROSSVIEW_CONTEXT_ALIASES")
+	defer os.Unsetenv("CONFIG_PATH")
+
+	env := NewEnv()
+	if env.ContextAliases != "{\"kind-kind\":\"my-kind\"}" {
+		t.Errorf("expected legacy key aliases to load, got: %s", env.ContextAliases)
+	}
+}

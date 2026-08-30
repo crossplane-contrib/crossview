@@ -40,7 +40,7 @@ func (c *ConfigController) GetContextAliases(ctx *gin.Context) {
 	aliases := map[string]string{}
 	if raw := c.env.ContextAliases; raw != "" {
 		if err := json.Unmarshal([]byte(raw), &aliases); err != nil {
-			c.logger.Warnf("Invalid CROSSVIEW_CONTEXT_ALIASES JSON: %v", err)
+			c.logger.Warnf("Invalid CONTEXT_ALIASES JSON: %v", err)
 			aliases = map[string]string{}
 		}
 	}

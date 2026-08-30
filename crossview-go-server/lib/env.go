@@ -1,9 +1,11 @@
 package lib
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -36,7 +38,7 @@ type Env struct {
 	OIDCEnabled bool `mapstructure:"OIDC_ENABLED"`
 	SAMLEnabled bool `mapstructure:"SAML_ENABLED"`
 
-	ContextAliases string `mapstructure:"CROSSVIEW_CONTEXT_ALIASES"`
+	ContextAliases string `mapstructure:"CONTEXT_ALIASES"`
 }
 
 func NewEnv() Env {
@@ -154,7 +156,7 @@ func NewEnv() Env {
 		"true",
 	) == "true"
 
-	env.ContextAliases = getEnvOrDefault("CROSSVIEW_CONTEXT_ALIASES", "")
+	env.ContextAliases = loadContextAliasesFromEnvOrConfig()
 
 	return env
 }
@@ -198,4 +200,82 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func loadContextAliasesFromEnvOrConfig() string {
+	if raw := strings.TrimSpace(os.Getenv("CONTEXT_ALIASES")); raw != "" {
+		return raw
+	}
+	if raw := strings.TrimSpace(os.Getenv("CROSSVIEW_CONTEXT_ALIASES")); raw != "" {
+		return raw
+	}
+
+	candidates := []string{"server.contextAliases", "crossview-context-aliases"}
+	for _, key := range candidates {
+		if !viper.IsSet(key) {
+			continue
+		}
+		if aliases := normalizeContextAliases(viper.Get(key)); len(aliases) > 0 {
+			b, err := json.Marshal(aliases)
+			if err != nil {
+				return ""
+			}
+			return string(b)
+		}
+	}
+
+	return ""
+}
+
+func normalizeContextAliases(raw interface{}) map[string]string {
+	result := map[string]string{}
+
+	switch v := raw.(type) {
+	case map[string]string:
+		for k, val := range v {
+			if strings.TrimSpace(k) == "" || strings.TrimSpace(val) == "" {
+				continue
+			}
+			result[k] = val
+		}
+	case map[string]interface{}:
+		for k, val := range v {
+			vs, ok := val.(string)
+			if !ok || strings.TrimSpace(k) == "" || strings.TrimSpace(vs) == "" {
+				continue
+			}
+			result[k] = vs
+		}
+	case map[interface{}]interface{}:
+		for k, val := range v {
+			ks, ok := k.(string)
+			if !ok || strings.TrimSpace(ks) == "" {
+				continue
+			}
+			vs, ok := val.(string)
+			if !ok || strings.TrimSpace(vs) == "" {
+				continue
+			}
+			result[ks] = vs
+		}
+	case []interface{}:
+		for _, item := range v {
+			aliases := normalizeContextAliases(item)
+			for k, val := range aliases {
+				result[k] = val
+			}
+		}
+	case string:
+		parsed := map[string]string{}
+		if err := json.Unmarshal([]byte(v), &parsed); err == nil {
+			for k, val := range parsed {
+				if strings.TrimSpace(k) == "" || strings.TrimSpace(val) == "" {
+					continue
+				}
+				result[k] = val
+			}
+		}
+	}
+
+	return result
 }

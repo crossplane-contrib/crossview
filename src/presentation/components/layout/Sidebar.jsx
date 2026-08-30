@@ -34,13 +34,15 @@ export const Sidebar = ({ onToggle, onResize }) => {
       setContextSidebarWidth(0);
       return;
     }
-    const updateContextSidebarWidth = () => {
+    const updateContextSidebarWidth = (event) => {
       const saved = localStorage.getItem('contextSidebarCollapsed');
-      setContextSidebarWidth(saved === 'true' ? 0 : 60);
+      const eventWidth = Number(event?.detail?.width);
+      const resolvedWidth = Number.isFinite(eventWidth) && eventWidth > 0 ? eventWidth : 60;
+      setContextSidebarWidth(saved === 'true' ? 0 : resolvedWidth);
     };
     updateContextSidebarWidth();
-    const handleWidthChange = () => {
-      updateContextSidebarWidth();
+    const handleWidthChange = (event) => {
+      updateContextSidebarWidth(event);
     };
     window.addEventListener('contextSidebarWidthChanged', handleWidthChange);
     return () => window.removeEventListener('contextSidebarWidthChanged', handleWidthChange);
