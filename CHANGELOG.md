@@ -1,3 +1,16 @@
+# [4.6.0-rc.1](https://github.com/crossplane-contrib/crossview/compare/v4.5.0...v4.6.0-rc.1) (2026-08-30)
+
+
+### Bug Fixes
+
+* **ci:** correct Helm image tag rewrite for prerelease versions to prevent malformed Artifact Hub image references ([bcb5fd7](https://github.com/crossplane-contrib/crossview/commit/bcb5fd76))
+
+
+### Features
+
+* **context-aliases:** add server-driven context alias support in UI and config API ([39e18de](https://github.com/crossplane-contrib/crossview/commit/39e18de3))
+* **server:** add native Azure Workload Identity support for Kubernetes auth flow ([a5e2ad8](https://github.com/crossplane-contrib/crossview/commit/a5e2ad8d))
+
 # [4.5.0](https://github.com/crossplane-contrib/crossview/compare/v4.4.0...v4.5.0) (2026-06-29)
 
 
