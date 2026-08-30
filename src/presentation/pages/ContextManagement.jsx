@@ -15,7 +15,7 @@ import { Dialog } from '../components/common/Dialog.jsx';
 import { useAppContext } from '../providers/AppProvider.jsx';
 
 export const ContextManagement = () => {
-  const { contexts, kubernetesRepository, getKubernetesContextsUseCase, selectedContext, colorMode } = useAppContext();
+  const { contexts, kubernetesRepository, getKubernetesContextsUseCase, selectedContext, colorMode, contextAliases } = useAppContext();
   const [kubeConfigText, setKubeConfigText] = useState('');
   const [loading, setLoading] = useState(false);
   const [deletingContext, setDeletingContext] = useState(null);
@@ -201,7 +201,8 @@ export const ContextManagement = () => {
                 const isSelected = selectedContext === name;
                 const hasError = false;
                 const getFirstLetter = (n) => n ? n.charAt(0).toUpperCase() : '?';
-                
+                const label = contextAliases[name] || getFirstLetter(name);
+
                 return (
                   <Box
                     key={name}
@@ -237,10 +238,10 @@ export const ContextManagement = () => {
                           color={isSelected ? 'white' : 'gray.700'}
                           _dark={{ bg: isSelected ? 'blue.600' : 'gray.700', color: isSelected ? 'white' : 'gray.300' }}
                           fontWeight="bold"
-                          fontSize="lg"
+                          fontSize={label.length > 3 ? 'sm' : 'lg'}
                           flexShrink={0}
                         >
-                          {getFirstLetter(name)}
+                          {label}
                         </Box>
                         <VStack align="start" spacing={0} flex={1} minW={0}>
                           <HStack spacing={2} align="center">

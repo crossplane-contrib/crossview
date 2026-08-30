@@ -35,6 +35,8 @@ type Env struct {
 
 	OIDCEnabled bool `mapstructure:"OIDC_ENABLED"`
 	SAMLEnabled bool `mapstructure:"SAML_ENABLED"`
+
+	ContextAliases string `mapstructure:"CROSSVIEW_CONTEXT_ALIASES"`
 }
 
 func NewEnv() Env {
@@ -151,6 +153,8 @@ func NewEnv() Env {
 		viper.GetString("server.auth.header.createUsers"),
 		"true",
 	) == "true"
+
+	env.ContextAliases = getEnvOrDefault("CROSSVIEW_CONTEXT_ALIASES", "")
 
 	return env
 }

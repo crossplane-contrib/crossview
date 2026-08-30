@@ -57,6 +57,7 @@ export const AppProvider = ({ children }) => {
       return [];
     }
   });
+  const [contextAliases, setContextAliases] = useState({});
 
   const isInClusterMode = useMemo(() => {
     if (contexts.length !== 1) return false;
@@ -231,6 +232,19 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('savedSearches', JSON.stringify(updated));
   };
 
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/config/context-aliases', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : {}))
+      .then((data) => {
+        if (!cancelled && data && typeof data === 'object') {
+          setContextAliases(data);
+        }
+      })
+      .catch((err) => console.warn('Failed to load context aliases:', err));
+    return () => { cancelled = true; };
+  }, []);
+
   const handleDeleteSearch = (searchId) => {
     const updated = savedSearches.filter(s => s.id !== searchId);
     setSavedSearches(updated);
@@ -276,9 +290,10 @@ export const AppProvider = ({ children }) => {
       savedSearches,
       saveSearch: handleSaveSearch,
       deleteSearch: handleDeleteSearch,
+      contextAliases,
       isInClusterMode,
     };
-  }, [kubernetesRepository, getDashboardDataUseCase, getKubernetesContextsUseCase, authService, userService, selectedContext, contexts, user, authChecked, serverError, colorMode, savedSearches, isInClusterMode, authMode]);
+  }, [kubernetesRepository, getDashboardDataUseCase, getKubernetesContextsUseCase, authService, userService, selectedContext, contexts, user, authChecked, serverError, colorMode, savedSearches, contextAliases, isInClusterMode, authMode]);
 
   return (
     <ChakraProvider value={defaultSystem}>

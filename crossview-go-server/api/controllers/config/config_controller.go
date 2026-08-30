@@ -1,11 +1,13 @@
 package config
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"crossview-go-server/lib"
+
+	"github.com/gin-gonic/gin"
 )
 
 type ConfigController struct {
@@ -25,7 +27,7 @@ func (c *ConfigController) GetDatabaseConfig(ctx *gin.Context) {
 	if port == 0 {
 		port = 5432
 	}
-	
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"host":     c.env.DBHost,
 		"port":     port,
@@ -34,3 +36,13 @@ func (c *ConfigController) GetDatabaseConfig(ctx *gin.Context) {
 	})
 }
 
+func (c *ConfigController) GetContextAliases(ctx *gin.Context) {
+	aliases := map[string]string{}
+	if raw := c.env.ContextAliases; raw != "" {
+		if err := json.Unmarshal([]byte(raw), &aliases); err != nil {
+			c.logger.Warnf("Invalid CROSSVIEW_CONTEXT_ALIASES JSON: %v", err)
+			aliases = map[string]string{}
+		}
+	}
+	ctx.JSON(http.StatusOK, aliases)
+}

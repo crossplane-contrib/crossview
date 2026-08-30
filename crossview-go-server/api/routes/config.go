@@ -28,6 +28,6 @@ func (r ConfigRoutes) Setup() {
 	api := r.handler.Gin.Group("/api")
 	{
 		api.GET("/config/database", r.controller.GetDatabaseConfig)
+		api.GET("/config/context-aliases", r.controller.GetContextAliases)
 	}
 }
-

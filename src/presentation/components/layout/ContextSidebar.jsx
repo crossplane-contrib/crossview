@@ -11,7 +11,7 @@ import { useAppContext } from '../../providers/AppProvider.jsx';
 import { getBorderColor, getBackgroundColor, getTextColor, getAccentColor, getStatusColor } from '../../utils/theme.js';
 
 export const ContextSidebar = () => {
-  const { contexts, selectedContext, setSelectedContext, colorMode, isInClusterMode } = useAppContext();
+  const { contexts, selectedContext, setSelectedContext, colorMode, isInClusterMode, contextAliases } = useAppContext();
   const navigate = useNavigate();
 
   if (isInClusterMode) {
@@ -73,6 +73,7 @@ export const ContextSidebar = () => {
               const name = typeof context === 'string' ? context : context.name || context;
               const isSelected = contextName === name;
               const hasError = false;
+              const label = contextAliases[name] || getFirstLetter(name);
               return (
                 <Box
                   key={name}
@@ -102,8 +103,8 @@ export const ContextSidebar = () => {
                   cursor="default"
                   title={name}
                 >
-                  <Text fontSize="md" fontWeight="bold">
-                    {getFirstLetter(name)}
+                  <Text fontSize={label.length > 3 ? 'xs' : 'md'} fontWeight="bold">
+                    {label}
                   </Text>
                   {hasError && (
                     <Box
