@@ -13,6 +13,8 @@
 [![GitHub stars](https://img.shields.io/github/stars/crossplane-contrib/crossview?style=social)](https://github.com/crossplane-contrib/crossview)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
   [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/crossview)](https://artifacthub.io/packages/search?repo=crossview)
+
+  Support this project: [Buy Me a Coffee](https://buymeacoffee.com/moeidheidari)
 </div>
 
 ![Crossview Dashboard](public/images/new-screeenshot.png)
