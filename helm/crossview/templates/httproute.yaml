@@ -1,0 +1,78 @@
+{{- if and .Values.gatewayAPI.enabled .Values.gatewayAPI.httpRoute -}}
+apiVersion: {{ .Values.gatewayAPI.httpRoute.apiVersion | default "gateway.networking.k8s.io/v1" }}
+kind: HTTPRoute
+metadata:
+  name: {{ include "crossview.fullname" . }}-httproute
+  namespace: {{ include "crossview.namespace" . }}
+  labels:
+    {{- include "crossview.labels" . | nindent 4 }}
+    {{- with .Values.gatewayAPI.httpRoute.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.gatewayAPI.httpRoute.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+    {{- range .Values.gatewayAPI.httpRoute.parentRefs }}
+    - name: {{ .name }}
+      {{- with .namespace }}
+      namespace: {{ . }}
+      {{- end }}
+      {{- with .sectionName }}
+      sectionName: {{ . }}
+      {{- end }}
+      {{- with .port }}
+      port: {{ . }}
+      {{- end }}
+      {{- with .group }}
+      group: {{ . }}
+      {{- end }}
+      {{- with .kind }}
+      kind: {{ . }}
+      {{- end }}
+    {{- end }}
+  {{- with .Values.gatewayAPI.httpRoute.hostnames }}
+  hostnames:
+    {{- range . }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range $rule := .Values.gatewayAPI.httpRoute.rules }}
+    - matches:
+        {{- if $rule.matches }}
+        {{- toYaml $rule.matches | nindent 8 }}
+        {{- else }}
+        - path:
+            type: PathPrefix
+            value: /
+        {{- end }}
+      {{- with $rule.filters }}
+      filters:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      backendRefs:
+        {{- if $rule.backendRefs }}
+        {{- toYaml $rule.backendRefs | nindent 8 }}
+        {{- else }}
+        - name: {{ include "crossview.fullname" $ }}-service
+          port: {{ $.Values.service.port }}
+          weight: 1
+        {{- end }}
+      {{- with $rule.timeouts }}
+      timeouts:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- else }}
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: {{ include "crossview.fullname" . }}-service
+          port: {{ .Values.service.port }}
+          weight: 1
+    {{- end }}
+{{- end }}
