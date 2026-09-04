@@ -1,3 +1,30 @@
+# [4.6.0](https://github.com/crossplane-contrib/crossview/compare/v4.5.0...v4.6.0) (2026-09-04)
+
+
+### Bug Fixes
+
+* **ci:** correct Helm image tag rewrite for prerelease versions to prevent malformed Artifact Hub image references ([bcb5fd7](https://github.com/crossplane-contrib/crossview/commit/bcb5fd76))
+* **config:** support context aliases in config and Helm, improve long-label handling in the UI, and add config examples ([4cc0042](https://github.com/crossplane-contrib/crossview/commit/4cc00428), [2fb73f4](https://github.com/crossplane-contrib/crossview/commit/2fb73f45))
+* **helm:** add schema coverage for app extension values ([99c23a9](https://github.com/crossplane-contrib/crossview/commit/99c23a9a))
+
+
+### Features
+
+* **context-aliases:** add server-driven context alias support in UI and config API ([39e18de](https://github.com/crossplane-contrib/crossview/commit/39e18de3))
+* **server:** add native Azure Workload Identity support for Kubernetes auth flow ([a5e2ad8](https://github.com/crossplane-contrib/crossview/commit/a5e2ad8d))
+* **chart:** add extra init containers, extra volumes, extra volume mounts, and automount service account token support ([47e932e](https://github.com/crossplane-contrib/crossview/commit/47e932ea))
+* **helm:** add Gateway API HTTPRoute support ([c1a8784](https://github.com/crossplane-contrib/crossview/commit/c1a8784a))
+
+
+### Documentation
+
+* **helm:** document new chart configuration options and Gateway API usage ([c1a8784](https://github.com/crossplane-contrib/crossview/commit/c1a8784a))
+
+
+### Other
+
+* **deps:** bump postgres, crypto, gorm, and transitive pgx dependencies ([70196e9](https://github.com/crossplane-contrib/crossview/commit/70196e9e), [9436336](https://github.com/crossplane-contrib/crossview/commit/94363369))
+
 # [4.6.0-rc.2](https://github.com/crossplane-contrib/crossview/compare/v4.6.0-rc.1...v4.6.0-rc.2) (2026-09-04)
 
 
