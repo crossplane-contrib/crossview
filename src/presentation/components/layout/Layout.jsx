@@ -1,6 +1,7 @@
 import { Box, Text, HStack, Icon, Button, VStack } from '@chakra-ui/react';
 import { FiAlertCircle, FiChevronRight } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Sidebar } from './Sidebar.jsx';
 import { ContextSidebar } from './ContextSidebar.jsx';
 import { Header } from './Header.jsx';
@@ -50,15 +51,17 @@ export const Layout = ({ children }) => {
       setShowContextSidebar(false);
       return;
     }
-    const updateContextSidebarWidth = () => {
+    const updateContextSidebarWidth = (event) => {
       const saved = localStorage.getItem('contextSidebarCollapsed');
       const isCollapsed = saved === 'true';
-      setContextSidebarWidth(isCollapsed ? 0 : 60);
+      const eventWidth = Number(event?.detail?.width);
+      const resolvedWidth = Number.isFinite(eventWidth) && eventWidth > 0 ? eventWidth : 60;
+      setContextSidebarWidth(isCollapsed ? 0 : resolvedWidth);
       setShowContextSidebar(!isCollapsed);
     };
     updateContextSidebarWidth();
-    const handleWidthChange = () => {
-      updateContextSidebarWidth();
+    const handleWidthChange = (event) => {
+      updateContextSidebarWidth(event);
     };
     window.addEventListener('contextSidebarWidthChanged', handleWidthChange);
     return () => window.removeEventListener('contextSidebarWidthChanged', handleWidthChange);
@@ -168,5 +171,9 @@ export const Layout = ({ children }) => {
       ))}
     </Box>
   );
+};
+
+Layout.propTypes = {
+  children: PropTypes.node,
 };
 

@@ -184,3 +184,85 @@ tests:
               configMapKeyRef:
                 name: RELEASE-NAME-crossview-config
                 key: DB_PORT
+  - it: should append extraInitContainers after wait-for-db
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+      app:
+        extraInitContainers:
+          - name: install-plugin
+            image: alpine:3.20
+            command: ["sh", "-c", "echo hi"]
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: wait-for-db
+      - equal:
+          path: spec.template.spec.initContainers[1].name
+          value: install-plugin
+
+  - it: should emit extraInitContainers when database is disabled
+    set:
+      database:
+        enabled: false
+      secrets:
+        sessionSecret: test-secret
+      app:
+        extraInitContainers:
+          - name: install-plugin
+            image: alpine:3.20
+            command: ["sh", "-c", "echo hi"]
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: install-plugin
+
+  - it: should render extraVolumes and extraVolumeMounts
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+      app:
+        extraVolumes:
+          - name: kubelogin-bin
+            emptyDir: {}
+        extraVolumeMounts:
+          - name: kubelogin-bin
+            mountPath: /usr/local/bin/kubelogin
+            subPath: kubelogin
+            readOnly: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: kubelogin-bin
+            emptyDir: {}
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: kubelogin-bin
+            mountPath: /usr/local/bin/kubelogin
+            subPath: kubelogin
+            readOnly: true
+
+  - it: should not render automountServiceAccountToken when unset
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+    asserts:
+      - notExists:
+          path: spec.template.spec.automountServiceAccountToken
+
+  - it: should render automountServiceAccountToken=false when set
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+      app:
+        automountServiceAccountToken: false
+    asserts:
+      - equal:
+          path: spec.template.spec.automountServiceAccountToken
+          value: false

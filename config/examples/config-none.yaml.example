@@ -1,5 +1,8 @@
 server:
   port: 3001
+  contextAliases:
+    kind-kind: KIND
+    dev-cluster: DEV
   auth:
     mode: "none" # ⚠️ WARNING: No authentication - use only in trusted environments
   log:

@@ -1,5 +1,8 @@
 server:
   port: 3001
+  contextAliases:
+    kind-kind: KIND
+    shared-cluster: SHRD
   auth:
     mode: "header"
     header:

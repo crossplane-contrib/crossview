@@ -148,7 +148,8 @@ jobs:
         run: |
           sed -i "s/^version:.*/version: $VERSION/" helm/crossview/Chart.yaml
           sed -i "s/^appVersion:.*/appVersion: \"$TAG\"/" helm/crossview/Chart.yaml
-          sed -i "s|ghcr.io/crossplane-contrib/crossview:v[0-9]\+\.[0-9]\+\.[0-9]\+|ghcr.io/crossplane-contrib/crossview:$TAG|" helm/crossview/Chart.yaml
+          # Replace the full image tag (including pre-release suffixes) to avoid malformed tags like "...-rc.7-rc.4".
+          sed -E -i "s|(image:[[:space:]]*ghcr.io/crossplane-contrib/crossview:)v[^[:space:]]+|\\1$TAG|" helm/crossview/Chart.yaml
           echo "Updated Chart.yaml to version $VERSION (appVersion: $TAG):"
           cat helm/crossview/Chart.yaml
 

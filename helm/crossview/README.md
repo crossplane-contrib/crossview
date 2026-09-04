@@ -91,6 +91,7 @@ The following table lists the configurable parameters and their default values:
 | `app.replicas`                   | Number of replicas                                                          | `1`                                        |
 | `database.enabled`               | Enable bundled PostgreSQL                                                   | `true`                                     |
 | `config.ref`                     | Reference existing ConfigMap (skips chart-generated config)                 | `""`                                       |
+| `config.server.contextAliases`   | Map of kube context names to short UI labels                                | `{}`                                        |
 | `config.server.auth.mode`        | Auth mode: `session`, `header`, or `none`                                   | `session`                                  |
 | `secrets.adminUsername`          | Admin username (plain string = chart creates it in secret)                  | `"admin"`                                  |
 | `secrets.adminPassword`          | Admin password (plain string = chart creates it in secret)                  | `"ChangeThisImmediately2026!"`             |
@@ -171,6 +172,25 @@ helm install crossview ./helm/crossview \
   --set secrets.sessionSecret=your-session-secret
 ```
 
+## Context Alias Labels
+
+To display short labels for long context names in the UI, set `config.server.contextAliases`:
+
+```yaml
+config:
+  server:
+    contextAliases:
+      kind-kind: KIND
+      dev-cluster: DEV
+```
+
+Equivalent CLI example:
+
+```bash
+helm upgrade --install crossview ./helm/crossview \
+  --set-json 'config.server.contextAliases={"kind-kind":"KIND","dev-cluster":"DEV"}'
+```
+
 ## Ingress Configuration
 
 To enable Ingress with TLS:
@@ -184,6 +204,34 @@ helm install crossview ./helm/crossview \
   --set ingress.tls[0].secretName=crossview-tls \
   --set ingress.tls[0].hosts[0]=crossview.example.com
 ```
+
+## Gateway API Configuration
+
+As an alternative to Ingress, the chart can render an `HTTPRoute` (Gateway API)
+that attaches to an existing `Gateway`. This requires the Gateway API CRDs and a
+Gateway controller already installed in the cluster.
+
+```bash
+helm install crossview ./helm/crossview \
+  --namespace crossview \
+  --create-namespace \
+  --set gatewayAPI.enabled=true \
+  --set gatewayAPI.httpRoute.parentRefs[0].name=my-gateway \
+  --set gatewayAPI.httpRoute.parentRefs[0].namespace=gateway-system \
+  --set gatewayAPI.httpRoute.hostnames[0]=crossview.example.com
+```
+
+Key `gatewayAPI.httpRoute` values:
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` | HTTPRoute apiVersion (default `gateway.networking.k8s.io/v1`; set `gateway.networking.k8s.io/v1beta1` for older controllers) |
+| `parentRefs` | List of Gateways to attach to. `name` is required; `namespace`, `sectionName`, `port`, `group`, `kind` are optional |
+| `hostnames` | Hostnames the route matches. Omit/empty to match all hostnames on the Gateway |
+| `rules` | Routing rules. Each rule may override `matches`, `filters`, `backendRefs` and `timeouts`. Default: a single `PathPrefix` `/` match routed to the crossview service |
+| `annotations` / `labels` | Extra metadata on the HTTPRoute |
+
+Enable only one of `ingress` or `gatewayAPI` at a time.
 
 ## Important Notes
 

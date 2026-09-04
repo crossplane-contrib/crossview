@@ -13,6 +13,9 @@
 [![GitHub stars](https://img.shields.io/github/stars/crossplane-contrib/crossview?style=social)](https://github.com/crossplane-contrib/crossview)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
   [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/crossview)](https://artifacthub.io/packages/search?repo=crossview)
+  [![View on KikPlate](https://img.shields.io/static/v1?label=KikPlate&message=fullstack-composed-template&color=0366d6&style=flat-square)](https://kikplate.dev/plates/fullstack-composed-template)
+
+  Bootstrapped with the KikPlate fullstack composed template.
 
   Support this project: [Buy Me a Coffee](https://buymeacoffee.com/moeidheidari)
 </div>

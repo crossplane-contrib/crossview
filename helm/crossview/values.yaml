@@ -18,7 +18,11 @@ app:
   name: crossview
   port: 3001
   replicas: 1
+  automountServiceAccountToken: null
   extraEnv: []
+  extraVolumes: []
+  extraVolumeMounts: []
+  extraInitContainers: []
   securityContext:
     runAsNonRoot: true
     runAsUser: 1000
@@ -95,6 +99,33 @@ ingress:
           pathType: Prefix
   tls: []
 
+# Gateway API configuration (alternative to ingress)
+# Requires the Gateway API CRDs and a Gateway controller installed in the cluster.
+# The chart renders an HTTPRoute that attaches to an existing Gateway via parentRefs.
+gatewayAPI:
+  enabled: false
+  httpRoute:
+    # apiVersion of the HTTPRoute resource. Override for older controllers (e.g. v1beta1).
+    apiVersion: gateway.networking.k8s.io/v1
+    annotations: {}
+    labels: {}
+    # Gateway(s) this route attaches to. name is required; the rest are optional.
+    parentRefs:
+      - name: gateway
+        # namespace: gateway-system
+        # sectionName: https
+        # port: 443
+    # Hostnames this route matches. Leave empty to match all hostnames on the Gateway.
+    hostnames:
+      - crossview.example.com
+    # Routing rules. Each rule may override matches, filters, backendRefs and timeouts.
+    # Defaults: a single PathPrefix "/" match routed to the crossview service.
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+
 # Database configuration
 database:
   enabled: true
@@ -144,6 +175,9 @@ config:
         key: ""
   server:
     port: 3001
+    # Optional short labels for kube contexts shown in UI badges.
+    # Example: { kind-kind: KIND, dev-cluster: DEV }
+    contextAliases: {}
     auth:
       mode: session
       trustedHeader: X-Auth-User
