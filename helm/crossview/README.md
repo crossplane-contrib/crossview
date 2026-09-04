@@ -205,6 +205,34 @@ helm install crossview ./helm/crossview \
   --set ingress.tls[0].hosts[0]=crossview.example.com
 ```
 
+## Gateway API Configuration
+
+As an alternative to Ingress, the chart can render an `HTTPRoute` (Gateway API)
+that attaches to an existing `Gateway`. This requires the Gateway API CRDs and a
+Gateway controller already installed in the cluster.
+
+```bash
+helm install crossview ./helm/crossview \
+  --namespace crossview \
+  --create-namespace \
+  --set gatewayAPI.enabled=true \
+  --set gatewayAPI.httpRoute.parentRefs[0].name=my-gateway \
+  --set gatewayAPI.httpRoute.parentRefs[0].namespace=gateway-system \
+  --set gatewayAPI.httpRoute.hostnames[0]=crossview.example.com
+```
+
+Key `gatewayAPI.httpRoute` values:
+
+| Field | Description |
+| --- | --- |
+| `apiVersion` | HTTPRoute apiVersion (default `gateway.networking.k8s.io/v1`; set `gateway.networking.k8s.io/v1beta1` for older controllers) |
+| `parentRefs` | List of Gateways to attach to. `name` is required; `namespace`, `sectionName`, `port`, `group`, `kind` are optional |
+| `hostnames` | Hostnames the route matches. Omit/empty to match all hostnames on the Gateway |
+| `rules` | Routing rules. Each rule may override `matches`, `filters`, `backendRefs` and `timeouts`. Default: a single `PathPrefix` `/` match routed to the crossview service |
+| `annotations` / `labels` | Extra metadata on the HTTPRoute |
+
+Enable only one of `ingress` or `gatewayAPI` at a time.
+
 ## Important Notes
 
 - When `config.server.auth.mode` = `session` → `secrets.dbPassword` and `secrets.sessionSecret` are required

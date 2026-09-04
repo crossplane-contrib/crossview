@@ -144,6 +144,38 @@
         "tls": { "type": "array" }
       }
     },
+    "gatewayAPI": {
+      "type": "object",
+      "description": "Gateway API support. Renders an HTTPRoute attached to an existing Gateway.",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "httpRoute": {
+          "type": "object",
+          "properties": {
+            "apiVersion": { "type": "string", "default": "gateway.networking.k8s.io/v1" },
+            "annotations": { "type": "object" },
+            "labels": { "type": "object" },
+            "parentRefs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "namespace": { "type": "string" },
+                  "sectionName": { "type": "string" },
+                  "port": { "type": "integer" },
+                  "group": { "type": "string" },
+                  "kind": { "type": "string" }
+                },
+                "required": ["name"]
+              }
+            },
+            "hostnames": { "type": "array", "items": { "type": "string" } },
+            "rules": { "type": "array" }
+          }
+        }
+      }
+    },
     "database": {
       "type": "object",
       "properties": {
