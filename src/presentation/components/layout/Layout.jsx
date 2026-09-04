@@ -1,6 +1,7 @@
 import { Box, Text, HStack, Icon, Button, VStack } from '@chakra-ui/react';
 import { FiAlertCircle, FiChevronRight } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { Sidebar } from './Sidebar.jsx';
 import { ContextSidebar } from './ContextSidebar.jsx';
 import { Header } from './Header.jsx';
@@ -170,5 +171,9 @@ export const Layout = ({ children }) => {
       ))}
     </Box>
   );
+};
+
+Layout.propTypes = {
+  children: PropTypes.node,
 };
 

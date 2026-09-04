@@ -1,3 +1,28 @@
+# [4.6.0-rc.2](https://github.com/crossplane-contrib/crossview/compare/v4.6.0-rc.1...v4.6.0-rc.2) (2026-09-04)
+
+
+### Bug Fixes
+
+* **config:** support context aliases in config and Helm, and improve long-label handling in the UI ([4cc0042](https://github.com/crossplane-contrib/crossview/commit/4cc00428))
+* **helm:** add schema coverage for app extension values ([99c23a9](https://github.com/crossplane-contrib/crossview/commit/99c23a9a))
+
+
+### Features
+
+* **chart:** add extra init containers, extra volumes, extra volume mounts, and automount service account token support ([47e932e](https://github.com/crossplane-contrib/crossview/commit/47e932ea))
+* **helm:** add Gateway API HTTPRoute support ([c1a8784](https://github.com/crossplane-contrib/crossview/commit/c1a8784a))
+
+
+### Documentation
+
+* **readme:** add Buy Me a Coffee support link ([0e0d095](https://github.com/crossplane-contrib/crossview/commit/0e0d095f))
+* **helm:** document new chart configuration options and Gateway API usage ([c1a8784](https://github.com/crossplane-contrib/crossview/commit/c1a8784a))
+
+
+### Other
+
+* **deps:** bump postgres, crypto, gorm, and transitive pgx dependencies ([70196e9](https://github.com/crossplane-contrib/crossview/commit/70196e9e), [9436336](https://github.com/crossplane-contrib/crossview/commit/94363369))
+
 # [4.6.0-rc.1](https://github.com/crossplane-contrib/crossview/compare/v4.5.0...v4.6.0-rc.1) (2026-08-30)
 
 

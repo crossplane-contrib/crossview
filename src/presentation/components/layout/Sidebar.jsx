@@ -3,11 +3,11 @@ import {
   VStack,
   HStack,
   Text,
-  Button,
   Image,
 } from '@chakra-ui/react';
 import { FiChevronLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiLayout, FiSettings, FiPackage, FiFileText, FiLayers, FiBox, FiBook, FiServer, FiUsers, FiSliders, FiGrid, FiDatabase, FiCode, FiGithub, FiShield } from 'react-icons/fi';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '../../providers/AppProvider.jsx';
 import { colors, getBorderColor, getTextColor, getBackgroundColor, getSidebarColor, getAccentColor } from '../../utils/theme.js';
@@ -145,7 +145,7 @@ export const Sidebar = ({ onToggle, onResize }) => {
     };
   }, [selectedContext, kubernetesRepository]);
 
-  const menuItems = [
+  const menuItems = useMemo(() => ([
     { id: 'dashboard', label: 'Dashboard', icon: FiLayout, path: '/' },
     // Core Crossplane Resources (building blocks)
     { id: 'providers', label: 'Providers', icon: FiPackage, path: '/providers', tooltip: 'Crossplane providers that extend Kubernetes capabilities' },
@@ -155,10 +155,10 @@ export const Sidebar = ({ onToggle, onResize }) => {
     { id: 'mrds', label: 'MRDs', icon: FiLayers, path: '/mrds', tooltip: 'Managed Resource Definitions - available managed resource types from providers' },
     { id: 'mraps', label: 'MRAPs', icon: FiShield, path: '/mraps', tooltip: 'Managed Resource Activation Policies - control managed resource activation' },
     // Crossplane Instances (created resources)
-    { 
-      id: 'composite-resources', 
-      label: 'Composite Resources', 
-      icon: FiBox, 
+    {
+      id: 'composite-resources',
+      label: 'Composite Resources',
+      icon: FiBox,
       path: '/composite-resources',
       tooltip: 'Composite Resources (XRs) - instances created from Compositions',
       hasSubMenu: true,
@@ -170,10 +170,10 @@ export const Sidebar = ({ onToggle, onResize }) => {
     },
     { id: 'claims', label: 'Claims', icon: FiFileText, path: '/claims', tooltip: 'User-facing abstractions that create Composite Resources' },
     { id: 'managed-resources', label: 'Managed Resources', icon: FiServer, path: '/managed-resources', tooltip: 'Kubernetes resources created and managed by Crossplane (Deployments, Services, etc.)' },
-    { 
-      id: 'settings', 
-      label: 'Settings', 
-      icon: FiSettings, 
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: FiSettings,
       path: '/settings',
       hasSubMenu: true,
       subMenuItems: [
@@ -182,7 +182,7 @@ export const Sidebar = ({ onToggle, onResize }) => {
         ...(isInClusterMode ? [] : [{ id: 'settings-contexts', label: 'Contexts', icon: FiDatabase, path: '/settings/context-management' }]),
       ]
     },
-  ];
+  ]), [authMode, compositeResourceKinds, isInClusterMode]);
 
   // Auto-expand menu if a sub-menu item is active
   useEffect(() => {
@@ -198,7 +198,7 @@ export const Sidebar = ({ onToggle, onResize }) => {
         }
       }
     });
-  }, [location.pathname, compositeResourceKinds]);
+  }, [location.pathname, menuItems]);
 
   const toggleMenu = (menuId) => {
     setExpandedMenus(prev => ({
@@ -659,4 +659,9 @@ export const Sidebar = ({ onToggle, onResize }) => {
 
     </Box>
   );
+};
+
+Sidebar.propTypes = {
+  onToggle: PropTypes.func,
+  onResize: PropTypes.func,
 };

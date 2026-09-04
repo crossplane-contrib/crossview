@@ -17,6 +17,9 @@ server:
     username: admin
     password: password
   port: 3001
+  contextAliases:
+    kind-kind: KIND
+    prod-cluster: PROD
   log:
     level: info  # Options: debug, info, warn, error, fatal, panic
   cors:
