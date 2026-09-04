@@ -53,6 +53,25 @@
         "replicas": {
           "type": "integer",
           "default": 1
+        },
+        "automountServiceAccountToken": {
+          "type": ["boolean", "null"],
+          "default": null
+        },
+        "extraInitContainers": {
+          "type": "array",
+          "items": { "type": "object" },
+          "default": []
+        },
+        "extraVolumes": {
+          "type": "array",
+          "items": { "type": "object" },
+          "default": []
+        },
+        "extraVolumeMounts": {
+          "type": "array",
+          "items": { "type": "object" },
+          "default": []
         }
       }
     },
