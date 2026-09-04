@@ -18,7 +18,11 @@ app:
   name: crossview
   port: 3001
   replicas: 1
+  automountServiceAccountToken: null
   extraEnv: []
+  extraVolumes: []
+  extraVolumeMounts: []
+  extraInitContainers: []
   securityContext:
     runAsNonRoot: true
     runAsUser: 1000
