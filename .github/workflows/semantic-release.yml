@@ -1,0 +1,69 @@
+# Bumps package.json / CHANGELOG.md and creates Git tags via semantic-release from conventional commits.
+# Optional secret SEMANTIC_RELEASE_GITHUB_TOKEN (PAT with contents:write) improves push reliability;
+# if unset, GITHUB_TOKEN is used as GH_TOKEN / GITHUB_TOKEN per semantic-release documentation.
+
+name: Semantic Release
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: semantic-release-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  semantic-release:
+    environment: production
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          token: ${{ secrets.SEMANTIC_RELEASE_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Run Go tests
+        working-directory: crossview-go-server
+        run: go test ./...
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install --no-save @rollup/rollup-linux-x64-gnu || true
+
+      - name: Run npm audit
+        run: |
+          echo "Checking for npm vulnerabilities..."
+          npm audit --audit-level=moderate || echo "⚠️ Some vulnerabilities found, but continuing build"
+
+      - name: Run semantic-release
+        env:
+          GH_TOKEN: ${{ secrets.SEMANTIC_RELEASE_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+        run: npx semantic-release --ci
+
+      - name: Report result
+        if: always()
+        run: |
+          if [ -f .semantic-release-version ]; then
+            VERSION=$(tr -d '\n\r' < .semantic-release-version)
+            echo "Published version ${VERSION} (tag v${VERSION})."
+            echo "### Published v${VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No new semantic version published (nothing releasable)."
+            echo "### No release published" >> "$GITHUB_STEP_SUMMARY"
+          fi

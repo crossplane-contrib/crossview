@@ -1,3 +1,6 @@
+# semantic-release CI marker (never commit)
+.semantic-release-version
+
 # Logs
 logs
 *.log

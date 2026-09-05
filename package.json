@@ -10,7 +10,8 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
-    "changelog:unreleased": "conventional-changelog -p angular -u -o RELEASE_NOTES.md"
+    "changelog:unreleased": "conventional-changelog -p angular -u -o RELEASE_NOTES.md",
+    "semantic-release": "semantic-release"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.30.0",
@@ -34,6 +35,12 @@
     "yaml": "^2.8.2"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/npm": "^13.1.5",
+    "@semantic-release/release-notes-generator": "^14.1.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
@@ -42,10 +49,11 @@
     "eslint-plugin-react": "^7.34.1",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",
+    "semantic-release": "^25.0.3",
     "vite": "^7.2.6"
   },
   "engines": {
-    "node": ">=20.19.0 || >=22.12.0",
+    "node": ">=22.14.0 || >=24.10.0",
     "npm": ">=10.0.0"
   },
   "overrides": {
