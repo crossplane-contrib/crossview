@@ -16,7 +16,9 @@ import { ResourceYAML } from './ResourceYAML.jsx';
 import { ResourceStatus } from './ResourceStatus.jsx';
 import { ResourceRelations } from './ResourceRelations.jsx';
 import { ResourceEvents } from './ResourceEvents.jsx';
+import { ResourceDrift } from './ResourceDrift.jsx';
 import { getBorderColor } from '../../utils/theme.js';
+import { getDriftEntries } from '../../utils/driftUtils.js'; // kept for potential future use
 
 export const ResourceDetails = ({ resource, onClose, onNavigate, onBack }) => {
   const { colorMode } = useAppContext();
@@ -24,6 +26,11 @@ export const ResourceDetails = ({ resource, onClose, onNavigate, onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
   
   const { loading, fullResource, relatedResources, events, eventsLoading } = useResourceData(resource);
+
+  // Drift detection — only for managed resources with forProvider/atProvider
+  const hasDrift = !loading && !!fullResource &&
+    fullResource.spec?.forProvider !== undefined &&
+    fullResource.status?.atProvider !== undefined;
 
   const getResourceKey = (res) => {
     return `${res.apiVersion || ''}:${res.kind || ''}:${res.metadata?.namespace || ''}:${res.metadata?.name || ''}`;
@@ -160,6 +167,7 @@ export const ResourceDetails = ({ resource, onClose, onNavigate, onBack }) => {
                 resource={resource}
                 hasStatus={!!fullResource.status}
                 hasRelations={relatedResources.length > 0}
+                hasDrift={hasDrift}
                 isNamespaced={(() => {
                   const namespace = fullResource.metadata?.namespace || resource.namespace || fullResource.namespace;
                   if (namespace && namespace !== 'undefined' && namespace !== 'null') {
@@ -206,6 +214,10 @@ export const ResourceDetails = ({ resource, onClose, onNavigate, onBack }) => {
                   colorMode={colorMode}
                   onNavigate={handleRelatedClick}
                 />
+              )}
+
+              {activeTab === 'drift' && (
+                <ResourceDrift fullResource={fullResource} />
               )}
             </Box>
           </Box>
