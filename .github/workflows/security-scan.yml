@@ -100,7 +100,7 @@ jobs:
       - name: Scan PostgreSQL image
         uses: aquasecurity/trivy-action@v0.35.0
         with:
-          image-ref: 'postgres:16.3-alpine'
+          image-ref: 'postgres:18-alpine'
           format: 'table'
           severity: 'CRITICAL,HIGH,MEDIUM'
           exit-code: '0'
