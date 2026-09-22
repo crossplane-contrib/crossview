@@ -53,7 +53,7 @@ spec:
           command: ['sh', '-c']
           args:
             - |
-              until PGPASSWORD=${DB_PASS} psql -h {{ include "crossview.fullname" . }}-postgres -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME} -c "SELECT 1" > /dev/null 2>&1; do
+              until PGPASSWORD=$${DB_PASS} psql -h {{ include "crossview.fullname" . }}-postgres -p $${DB_PORT} -U $${DB_USER} -d $${DB_NAME} -c "SELECT 1" > /dev/null 2>&1; do
                 echo "Waiting for database to be ready..."
                 sleep 2
               done
