@@ -1,8 +1,6 @@
 module crossview-go-server
 
-go 1.26.0
-
-toolchain go1.26.6
+go 1.25.0
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0
@@ -16,7 +14,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/fx v1.17.1
 	go.uber.org/zap v1.24.0
-	golang.org/x/crypto v0.56.0
+	golang.org/x/crypto v0.55.0
 	gorm.io/driver/postgres v1.6.2
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.2

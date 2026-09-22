@@ -184,7 +184,7 @@
           "type": "object",
           "properties": {
             "repository": { "type": "string", "default": "postgres" },
-            "tag": { "type": "string", "default": "18-alpine" }
+            "tag": { "type": "string", "default": "latest" }
           }
         },
         "persistence": {

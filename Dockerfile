@@ -13,7 +13,7 @@ COPY . .
 
 RUN npm run build
 
-FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS go-builder
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS go-builder
 
 ARG TARGETPLATFORM=linux/amd64
 ARG BUILDPLATFORM
@@ -35,7 +35,7 @@ COPY crossview-go-server/ ./
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /app/crossview-server ./main.go
 
-FROM alpine:3.22
+FROM alpine:latest
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM

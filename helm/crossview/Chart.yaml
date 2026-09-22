@@ -20,6 +20,6 @@ annotations:
     - name: crossview
       image: ghcr.io/crossplane-contrib/crossview:v3.9.0-rc.4
     - name: postgres
-      image: postgres:18-alpine
+      image: postgres:latest
 dependencies: []
 

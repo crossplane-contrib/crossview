@@ -1,30 +1,14 @@
 import { Box, Text, VStack, HStack, Spinner } from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAppContext } from '../../providers/AppProvider.jsx';
 import { GetCompositeResourcesUseCase } from '../../../domain/usecases/GetCompositeResourcesUseCase.js';
 import { GetClaimsUseCase } from '../../../domain/usecases/GetClaimsUseCase.js';
 import { Container } from '../common/Container.jsx';
 
-const countByNamespace = (compositeResources, claims) => {
-  const namespaceMap = {};
-  
-  [...compositeResources, ...claims].forEach(resource => {
-    const ns = resource.namespace || '(none)';
-    if (!namespaceMap[ns]) {
-      namespaceMap[ns] = 0;
-    }
-    namespaceMap[ns]++;
-  });
-  
-  return Object.entries(namespaceMap)
-    .map(([namespace, count]) => ({ namespace, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
-};
-
 export const NamespaceDistributionWidget = () => {
   const { kubernetesRepository, selectedContext } = useAppContext();
-  const [namespaceData, setNamespaceData] = useState([]);
+  const [compositeResources, setCompositeResources] = useState([]);
+  const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -42,31 +26,22 @@ export const NamespaceDistributionWidget = () => {
           ? selectedContext 
           : selectedContext.name || selectedContext;
         
-        // No limit: the distribution has to be counted over every composite
-        // resource and claim. A limit here would truncate the newest N items
-        // (the use cases sort by creationTimestamp descending) and report the
-        // namespaces of that sample as if they were the whole cluster.
         const [compositeData, claimsData] = await Promise.all([
           new GetCompositeResourcesUseCase(kubernetesRepository)
-            .execute(contextName, null, null)
+            .execute(contextName, 100, null)
             .catch(() => ({ items: [] })),
           new GetClaimsUseCase(kubernetesRepository)
-            .execute(contextName, null, null)
+            .execute(contextName, 100, null)
             .catch(() => ({ items: [] })),
         ]);
         
-        // Reduce to per-namespace counts before storing. Keeping the resources
-        // themselves in state would retain every composite resource and claim
-        // in memory for as long as the dashboard is open, for a widget that
-        // only ever renders five numbers.
-        setNamespaceData(countByNamespace(
-          Array.isArray(compositeData) ? compositeData : (compositeData?.items || []),
-          Array.isArray(claimsData) ? claimsData : (claimsData?.items || []),
-        ));
+        setCompositeResources(Array.isArray(compositeData) ? compositeData : (compositeData?.items || []));
+        setClaims(Array.isArray(claimsData) ? claimsData : (claimsData?.items || []));
       } catch (err) {
         console.warn('Failed to fetch namespace data:', err.message);
         setError(err.message);
-        setNamespaceData([]);
+        setCompositeResources([]);
+        setClaims([]);
       } finally {
         setLoading(false);
       }
@@ -74,6 +49,24 @@ export const NamespaceDistributionWidget = () => {
 
     loadData();
   }, [selectedContext, kubernetesRepository]);
+
+  const namespaceData = useMemo(() => {
+    const allResources = [...compositeResources, ...claims];
+    const namespaceMap = {};
+    
+    allResources.forEach(resource => {
+      const ns = resource.namespace || '(none)';
+      if (!namespaceMap[ns]) {
+        namespaceMap[ns] = 0;
+      }
+      namespaceMap[ns]++;
+    });
+    
+    return Object.entries(namespaceMap)
+      .map(([namespace, count]) => ({ namespace, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [compositeResources, claims]);
 
   if (loading) {
     return (
