@@ -1,3 +1,10 @@
+# [4.7.0-rc.2](https://github.com/crossplane-contrib/crossview/compare/v4.7.0-rc.1...v4.7.0-rc.2) (2026-09-22)
+
+
+### Bug Fixes
+
+* **dashboard:** count all composite resources in namespace and health widgets instead of a truncated sample ([9cb06f6](https://github.com/crossplane-contrib/crossview/commit/9cb06f63699a6a24782f1793cc2545f1c2b15c53))
+
 # [4.7.0-rc.1](https://github.com/crossplane-contrib/crossview/compare/v4.6.0...v4.7.0-rc.1) (2026-09-21)
 
 
