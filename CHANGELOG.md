@@ -1,3 +1,26 @@
+# [4.7.0-rc.2](https://github.com/crossplane-contrib/crossview/compare/v4.7.0-rc.1...v4.7.0-rc.2) (2026-09-22)
+
+
+### Bug Fixes
+
+* **dashboard:** count all composite resources in namespace and health widgets instead of a truncated sample ([9cb06f6](https://github.com/crossplane-contrib/crossview/commit/9cb06f63699a6a24782f1793cc2545f1c2b15c53))
+
+# [4.7.0-rc.1](https://github.com/crossplane-contrib/crossview/compare/v4.6.0...v4.7.0-rc.1) (2026-09-21)
+
+
+### Bug Fixes
+
+* **chart:** correct shell variable syntax in database init container to fix indefinite PostgreSQL readiness retries ([e7234aa](https://github.com/crossplane-contrib/crossview/commit/e7234aaff9ffb55b2a06778df64e992119711ba0))
+* **chart:** pin PostgreSQL image to `postgres:18-alpine` instead of mutable `latest` tag
+* **docker:** pin base images (`golang:1.26-alpine`, `alpine:3.22`) for reproducible, scannable builds
+
+
+### Security
+
+* **deps:** resolve all 17 npm audit vulnerabilities (vite, rollup, react-router, yaml and transitive dependencies)
+* **deps:** bump `golang.org/x/crypto` to v0.56.0 and Go toolchain to go1.26.6 (govulncheck clean)
+* **ci:** align security-scan workflow with pinned `postgres:18-alpine` image
+
 # [4.6.0](https://github.com/crossplane-contrib/crossview/compare/v4.5.0...v4.6.0) (2026-09-04)
 
 
