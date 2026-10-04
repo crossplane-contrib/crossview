@@ -14,6 +14,11 @@ server:
   contextAliases:
     kind-kind: KIND
     prod-cluster: PROD
+  managed:
+    cacheTTLSeconds: 300
+    pageSize: 1000
+    maxItemsPerType: 5000
+    maxConcurrency: 10
   auth:
     mode: "session"
   log:

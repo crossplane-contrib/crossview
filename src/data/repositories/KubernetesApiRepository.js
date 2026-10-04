@@ -130,7 +130,7 @@ export class KubernetesApiRepository extends IKubernetesRepository {
     }
   }
 
-  async getManagedResources(context = null, forceRefresh = false) {
+  async getManagedResources(context = null, forceRefresh = false, options = {}) {
     try {
       const params = new URLSearchParams();
       if (context) {
@@ -139,12 +139,26 @@ export class KubernetesApiRepository extends IKubernetesRepository {
       if (forceRefresh) {
         params.append('refresh', 'true');
       }
+      if (options.limit) {
+        params.append('limit', options.limit.toString());
+      }
+      if (options.continueToken) {
+        params.append('continue', options.continueToken);
+      }
+      if (options.kind) {
+        params.append('kind', options.kind);
+      }
+      if (options.search) {
+        params.append('search', options.search);
+      }
       const queryString = params.toString();
       const endpoint = `/managed${queryString ? `?${queryString}` : ''}`;
       const result = await this.request(endpoint);
       return {
         items: result.items || [],
-        fromCache: result.fromCache || false
+        fromCache: result.fromCache || false,
+        totalCount: typeof result.totalCount === 'number' ? result.totalCount : (result.items || []).length,
+        continueToken: result.continueToken || null
       };
     } catch (error) {
       throw new Error(`Failed to get managed resources: ${error.message}`);

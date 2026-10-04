@@ -178,6 +178,11 @@ config:
     # Optional short labels for kube contexts shown in UI badges.
     # Example: { kind-kind: KIND, dev-cluster: DEV }
     contextAliases: {}
+    managed:
+      cacheTTLSeconds: 300
+      pageSize: 1000
+      maxItemsPerType: 5000
+      maxConcurrency: 10
     auth:
       mode: session
       trustedHeader: X-Auth-User

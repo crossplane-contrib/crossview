@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"github.com/gin-gonic/gin"
 	"crossview-go-server/lib"
+	"crossview-go-server/services"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -35,6 +36,7 @@ type MockKubernetesService struct {
 	GetResourceFunc          func(apiVersion, kind, name, namespace, contextName, plural string) (map[string]interface{}, error)
 	GetEventsFunc            func(kind, name, namespace, contextName string) ([]map[string]interface{}, error)
 	GetManagedResourcesFunc  func(contextName string, forceRefresh bool) (map[string]interface{}, error)
+	GetManagedResourcesPagedFunc func(contextName string, forceRefresh bool, opts *services.ManagedResourcesOptions) (map[string]interface{}, error)
 }
 
 func (m MockKubernetesService) SetContext(ctxName string) error {
@@ -101,6 +103,19 @@ func (m MockKubernetesService) GetEvents(kind, name, namespace, contextName stri
 }
 
 func (m MockKubernetesService) GetManagedResources(contextName string, forceRefresh bool) (map[string]interface{}, error) {
+	if m.GetManagedResourcesFunc != nil {
+		return m.GetManagedResourcesFunc(contextName, forceRefresh)
+	}
+	if m.GetManagedResourcesPagedFunc != nil {
+		return m.GetManagedResourcesPagedFunc(contextName, forceRefresh, nil)
+	}
+	return map[string]interface{}{"items": []interface{}{}}, nil
+}
+
+func (m MockKubernetesService) GetManagedResourcesPaged(contextName string, forceRefresh bool, opts *services.ManagedResourcesOptions) (map[string]interface{}, error) {
+	if m.GetManagedResourcesPagedFunc != nil {
+		return m.GetManagedResourcesPagedFunc(contextName, forceRefresh, opts)
+	}
 	if m.GetManagedResourcesFunc != nil {
 		return m.GetManagedResourcesFunc(contextName, forceRefresh)
 	}
