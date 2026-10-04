@@ -1,3 +1,10 @@
+# [4.7.0-rc.3](https://github.com/crossplane-contrib/crossview/compare/v4.7.0-rc.2...v4.7.0-rc.3) (2026-10-04)
+
+
+### Performance Improvements
+
+* **managed:** add server-side paging and tunable listing for large MR counts ([1478618](https://github.com/crossplane-contrib/crossview/commit/1478618975b641ab2d6e9958f1b29cfa00e7a829))
+
 # [4.7.0-rc.2](https://github.com/crossplane-contrib/crossview/compare/v4.7.0-rc.1...v4.7.0-rc.2) (2026-09-22)
 
 
