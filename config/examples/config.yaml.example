@@ -20,6 +20,11 @@ server:
   contextAliases:
     kind-kind: KIND
     prod-cluster: PROD
+  managed:
+    cacheTTLSeconds: 300
+    pageSize: 1000
+    maxItemsPerType: 5000
+    maxConcurrency: 10
   log:
     level: info  # Options: debug, info, warn, error, fatal, panic
   cors:

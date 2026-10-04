@@ -90,6 +90,18 @@ tests:
           path: data.LOG_LEVEL
           value: "info"
       - equal:
+          path: data.MANAGED_CACHE_TTL_SECONDS
+          value: "300"
+      - equal:
+          path: data.MANAGED_PAGE_SIZE
+          value: "1000"
+      - equal:
+          path: data.MANAGED_MAX_ITEMS_PER_TYPE
+          value: "5000"
+      - equal:
+          path: data.MANAGED_MAX_CONCURRENCY
+          value: "10"
+      - equal:
           path: data.OIDC_ENABLED
           value: "false"
       - equal:
@@ -161,6 +173,32 @@ tests:
       - equal:
           path: data.CONTEXT_ALIASES
           value: '{"dev-cluster":"DEV","kind-kind":"KIND"}'
+
+  - it: should render custom managed resources tuning values
+    set:
+      config:
+        server:
+          managed:
+            cacheTTLSeconds: 60
+            pageSize: 250
+            maxItemsPerType: 20000
+            maxConcurrency: 4
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+    asserts:
+      - equal:
+          path: data.MANAGED_CACHE_TTL_SECONDS
+          value: "60"
+      - equal:
+          path: data.MANAGED_PAGE_SIZE
+          value: "250"
+      - equal:
+          path: data.MANAGED_MAX_ITEMS_PER_TYPE
+          value: "20000"
+      - equal:
+          path: data.MANAGED_MAX_CONCURRENCY
+          value: "4"
 
   - it: should render an empty OIDC_ISSUER when issuer is not set (skips discovery)
     set:

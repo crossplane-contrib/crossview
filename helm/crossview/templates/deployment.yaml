@@ -178,6 +178,26 @@ spec:
                 configMapKeyRef:
                   name: {{ include "crossview.configMapName" . }}
                   key: AUTH_DEFAULT_ROLE
+            - name: MANAGED_CACHE_TTL_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "crossview.configMapName" . }}
+                  key: MANAGED_CACHE_TTL_SECONDS
+            - name: MANAGED_PAGE_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "crossview.configMapName" . }}
+                  key: MANAGED_PAGE_SIZE
+            - name: MANAGED_MAX_ITEMS_PER_TYPE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "crossview.configMapName" . }}
+                  key: MANAGED_MAX_ITEMS_PER_TYPE
+            - name: MANAGED_MAX_CONCURRENCY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "crossview.configMapName" . }}
+                  key: MANAGED_MAX_CONCURRENCY
             - name: OIDC_ENABLED
               valueFrom:
                 configMapKeyRef:

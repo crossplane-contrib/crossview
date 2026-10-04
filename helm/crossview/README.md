@@ -92,6 +92,10 @@ The following table lists the configurable parameters and their default values:
 | `database.enabled`               | Enable bundled PostgreSQL                                                   | `true`                                     |
 | `config.ref`                     | Reference existing ConfigMap (skips chart-generated config)                 | `""`                                       |
 | `config.server.contextAliases`   | Map of kube context names to short UI labels                                | `{}`                                        |
+| `config.server.managed.cacheTTLSeconds` | Managed resources cache TTL per context (seconds)                 | `300`                                       |
+| `config.server.managed.pageSize` | Page size for per-type Kubernetes LIST calls                           | `1000`                                      |
+| `config.server.managed.maxItemsPerType` | Max items fetched per managed resource type                   | `5000`                                      |
+| `config.server.managed.maxConcurrency` | Max parallel per-type LIST calls                              | `10`                                        |
 | `config.server.auth.mode`        | Auth mode: `session`, `header`, or `none`                                   | `session`                                  |
 | `secrets.adminUsername`          | Admin username (plain string = chart creates it in secret)                  | `"admin"`                                  |
 | `secrets.adminPassword`          | Admin password (plain string = chart creates it in secret)                  | `"ChangeThisImmediately2026!"`             |
@@ -172,6 +176,14 @@ helm install crossview ./helm/crossview \
   --set secrets.sessionSecret=your-session-secret
 ```
 
+### Bundled PostgreSQL security scans
+
+Image scanners may flag the bundled `postgres:18-alpine` image (all
+findings are in upstream's `gosu` binary, not in Crossview). No newer
+upstream tag clears them yet; the floating tag picks up a fixed rebuild
+automatically once published. For production, use an external database
+as shown above.
+
 ## Context Alias Labels
 
 To display short labels for long context names in the UI, set `config.server.contextAliases`:
@@ -189,6 +201,22 @@ Equivalent CLI example:
 ```bash
 helm upgrade --install crossview ./helm/crossview \
   --set-json 'config.server.contextAliases={"kind-kind":"KIND","dev-cluster":"DEV"}'
+```
+
+## Managed Resources Performance
+
+For clusters with 10k+ managed resources, tune the cache and listing
+behavior or page through `GET /api/managed` with `limit`, `continue`,
+`kind`, and `search`:
+
+```yaml
+config:
+  server:
+    managed:
+      cacheTTLSeconds: 300
+      pageSize: 1000
+      maxItemsPerType: 5000
+      maxConcurrency: 10
 ```
 
 ## Ingress Configuration

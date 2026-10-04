@@ -46,6 +46,14 @@ Crossview uses PostgreSQL for session storage when `server.auth.mode` is `sessio
    - Ensure network connectivity
    - Create database: `CREATE DATABASE crossview;`
 
+> Container image scanners (e.g. Artifact Hub) may report vulnerabilities
+> in the bundled PostgreSQL image. All of them come from upstream's `gosu`
+> binary (outdated Go stdlib), not from Crossview code or configuration,
+> and no newer upstream image tag clears them yet. The chart uses the
+> floating `18-alpine` tag, so a fixed upstream rebuild is picked up
+> automatically. For production, prefer an externally managed database
+> (`database.enabled: false`) that you patch on your own schedule.
+
 ## Kubernetes Configuration
 
 ### In-Cluster Deployment
@@ -106,6 +114,51 @@ Legacy config key is also supported for backward compatibility:
 crossview-context-aliases:
   - kind-kind: KIND
 ```
+
+### Managed Resources Performance
+
+For clusters with a large number of managed resources (10k+), tune the
+managed resources cache and per-type list behavior. Environment variables
+take precedence over the config file.
+
+**Environment Variables:**
+
+```bash
+MANAGED_CACHE_TTL_SECONDS=300  # Cache TTL per context (seconds)
+MANAGED_PAGE_SIZE=1000         # Page size for per-type Kubernetes LIST calls
+MANAGED_MAX_ITEMS_PER_TYPE=5000 # Max items fetched per resource type
+MANAGED_MAX_CONCURRENCY=10     # Max parallel per-type LIST calls
+```
+
+**Config File:**
+
+```yaml
+server:
+  managed:
+    cacheTTLSeconds: 300
+    pageSize: 1000
+    maxItemsPerType: 5000
+    maxConcurrency: 10
+```
+
+**Helm:**
+
+```yaml
+config:
+  server:
+    managed:
+      cacheTTLSeconds: 300
+      pageSize: 1000
+      maxItemsPerType: 5000
+      maxConcurrency: 10
+```
+
+**Paged API:**
+
+`GET /api/managed` accepts optional `limit`, `continue`, `kind`, and
+`search` query parameters and returns `items`, `totalCount`,
+`continueToken`, and `fromCache`. Calls without these parameters return
+the full list as before.
 
 ### Authentication Modes
 

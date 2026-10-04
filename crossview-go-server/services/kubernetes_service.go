@@ -28,6 +28,7 @@ type KubernetesServiceInterface interface {
 	GetResource(apiVersion, kind, name, namespace, contextName, plural string) (map[string]interface{}, error)
 	GetEvents(kind, name, namespace, contextName string) ([]map[string]interface{}, error)
 	GetManagedResources(contextName string, forceRefresh bool) (map[string]interface{}, error)
+	GetManagedResourcesPaged(contextName string, forceRefresh bool, opts *ManagedResourcesOptions) (map[string]interface{}, error)
 }
 
 type KubernetesService struct {
@@ -45,11 +46,31 @@ type KubernetesService struct {
 	managedResourcesCache map[string]map[string]interface{}
 	managedResourcesCacheTime map[string]time.Time
 	managedResourcesCacheTTL time.Duration
-	
+
+	managedPageSize int64
+	managedMaxItemsPerType int64
+	managedMaxConcurrency int
+
 	mu            sync.RWMutex
 }
 
 func NewKubernetesService(logger lib.Logger, env lib.Env) KubernetesServiceInterface {
+	pageSize := env.ManagedPageSize
+	if pageSize <= 0 {
+		pageSize = lib.DefaultManagedPageSize
+	}
+	maxItems := env.ManagedMaxItemsPerType
+	if maxItems <= 0 {
+		maxItems = lib.DefaultManagedMaxItemsPerType
+	}
+	maxConcurrency := env.ManagedMaxConcurrency
+	if maxConcurrency <= 0 {
+		maxConcurrency = lib.DefaultManagedMaxConcurrency
+	}
+	ttl := env.ManagedCacheTTL()
+	if ttl <= 0 {
+		ttl = time.Duration(lib.DefaultManagedCacheTTLSeconds) * time.Second
+	}
 	service := &KubernetesService{
 		logger:        logger,
 		env:           env,
@@ -57,7 +78,10 @@ func NewKubernetesService(logger lib.Logger, env lib.Env) KubernetesServiceInter
 		failedContexts: make(map[string]bool),
 		managedResourcesCache: make(map[string]map[string]interface{}),
 		managedResourcesCacheTime: make(map[string]time.Time),
-		managedResourcesCacheTTL: 5 * time.Minute, // 5 minute TTL
+		managedResourcesCacheTTL: ttl,
+		managedPageSize: pageSize,
+		managedMaxItemsPerType: maxItems,
+		managedMaxConcurrency: maxConcurrency,
 	}
 
 	serviceAccountPath := "/var/run/secrets/kubernetes.io/serviceaccount"

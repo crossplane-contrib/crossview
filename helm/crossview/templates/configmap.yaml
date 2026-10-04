@@ -30,6 +30,10 @@ data:
   LOG_LEVEL: {{ .Values.config.server.log.level | default "info" | quote }}
   CORS_ORIGIN: {{ .Values.config.server.cors.origin | default "http://localhost:5173" | quote }}
   CONTEXT_ALIASES: {{ .Values.config.server.contextAliases | default dict | toJson | quote }}
+  MANAGED_CACHE_TTL_SECONDS: {{ .Values.config.server.managed.cacheTTLSeconds | default 300 | quote }}
+  MANAGED_PAGE_SIZE: {{ .Values.config.server.managed.pageSize | default 1000 | quote }}
+  MANAGED_MAX_ITEMS_PER_TYPE: {{ .Values.config.server.managed.maxItemsPerType | default 5000 | quote }}
+  MANAGED_MAX_CONCURRENCY: {{ .Values.config.server.managed.maxConcurrency | default 10 | quote }}
   OIDC_ENABLED: {{ .Values.config.sso.oidc.enabled | default false | quote }}
   OIDC_ISSUER: {{ .Values.config.sso.oidc.issuer | default "" | quote }}
   OIDC_CLIENT_ID: {{ .Values.config.sso.oidc.clientId | default "crossview-client" | quote }}
