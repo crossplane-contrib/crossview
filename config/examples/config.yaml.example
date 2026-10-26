@@ -54,6 +54,8 @@ sso:
     emailAttribute: email
     firstNameAttribute: given_name
     lastNameAttribute: family_name
+    providerName: "" # Optional login-button label; inferred from issuer when empty
+    providerIcon: "" # Optional icon URL; defaults to the issuer origin's favicon
   # SAML 2.0 Configuration
   saml:
     enabled: false
@@ -73,4 +75,3 @@ vite:
       api:
         target: http://localhost:3001
         changeOrigin: true
-

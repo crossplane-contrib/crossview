@@ -16,6 +16,28 @@ Crossview supports **any OIDC (OpenID Connect) or SAML 2.0 provider** for Single
 
 4. **SSO login buttons** will appear on the login page
 
+## SSO with or without a database
+
+Use `server.auth.mode: session` for SSO.
+
+- With `database.enabled: false` (or `DB_ENABLED=false`), OIDC users are kept in
+  the signed session cookie instead of a local user table. The login page shows
+  only configured SSO providers: username, password, the password Sign In button,
+  and the "Or continue with" divider are hidden. Password login and registration
+  API endpoints are disabled. Database-free SSO users have the `user` role, not
+  automatic administrator access.
+- With `database.enabled: true`, SSO users are persisted and sessions resolve the
+  current database user. Existing local users can also sign in with username and
+  password; both login methods appear when an SSO provider is configured.
+
+Keep the session secret private and stable across replicas and restarts. The
+session cookie must reach the same application host after the provider redirects
+back. Sessions created before database-free SSO support require signing in again.
+The `/api/auth/check` response includes `databaseEnabled` for the login UI.
+
+The SAML callback still requires a SAML implementation; session support does not
+implement or enable SAML assertion validation.
+
 ## Required: Set `server.cors.origin` for Production
 
 > **This is a mandatory step for any non-local deployment.** After a successful SSO login, Crossview redirects the user back to the frontend using the `server.cors.origin` value (env var: `CORS_ORIGIN`). It defaults to `http://localhost:5173`. If you do not override it with your public URL, the post-login redirect will send the user to `localhost` instead of your actual host.
@@ -57,6 +79,8 @@ sso:
     # Must be the full callback path on your public host:
     callbackURL: https://crossview.example.com/api/auth/oidc/callback
     scope: openid profile email
+    providerName: "Company SSO" # Optional login-button label
+    providerIcon: "https://example.com/sso-icon.svg" # Optional icon URL
     
     # Optional: Custom attribute mappings
     usernameAttribute: preferred_username
@@ -64,6 +88,21 @@ sso:
     firstNameAttribute: given_name
     lastNameAttribute: family_name
 ```
+
+### Login button branding
+
+`sso.oidc.providerName` controls the "Sign in with ..." label and
+`sso.oidc.providerIcon` sets the icon URL. Environment variables
+`OIDC_PROVIDER_NAME` and `OIDC_PROVIDER_ICON` override these file settings.
+In Helm, use `config.sso.oidc.providerName` and
+`config.sso.oidc.providerIcon`.
+
+When the name is empty, the UI infers a provider name from the issuer and
+falls back to "SSO". When the icon is empty, it uses the issuer origin's
+`/favicon.ico`, if an issuer is configured. Explicit branding is useful for
+split-horizon configurations without an issuer. Icon URLs must be reachable
+by the user's browser; prefer HTTPS or a same-origin asset path. These values
+are public UI metadata, not secrets.
 
 ### OIDC Provider Setup
 
@@ -183,4 +222,3 @@ When a user logs in via SSO for the first time:
 - **Ensure redirect URIs match** exactly (including http vs https)
 - **Check client secret** is correct
 - **Verify certificate format** for SAML (PEM format)
-

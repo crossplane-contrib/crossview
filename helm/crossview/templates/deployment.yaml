@@ -249,6 +249,18 @@ spec:
                 configMapKeyRef:
                   name: {{ include "crossview.configMapName" . }}
                   key: OIDC_USERNAME_ATTRIBUTE
+            - name: OIDC_PROVIDER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "crossview.configMapName" . }}
+                  key: OIDC_PROVIDER_NAME
+                  optional: true
+            - name: OIDC_PROVIDER_ICON
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "crossview.configMapName" . }}
+                  key: OIDC_PROVIDER_ICON
+                  optional: true
             - name: OIDC_EMAIL_ATTRIBUTE
               valueFrom:
                 configMapKeyRef:

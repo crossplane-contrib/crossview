@@ -17,6 +17,7 @@ Crossview supports multiple configuration methods, in order of priority:
 **Environment Variables:**
 ```bash
 DB_HOST=localhost          # Database host
+DB_ENABLED=true            # Set false for SSO-only session authentication
 DB_PORT=5432               # Database port
 DB_NAME=crossview          # Database name
 DB_USER=postgres           # Database user
@@ -26,6 +27,7 @@ DB_PASSWORD=your-password  # Database password
 **Config File:**
 ```yaml
 database:
+  enabled: true
   host: localhost
   port: 5432
   name: crossview
@@ -35,7 +37,11 @@ database:
 
 ### Database Setup
 
-Crossview uses PostgreSQL for session storage when `server.auth.mode` is `session`. When `server.auth.mode` is `header` or `none`, the database is not used. You can:
+Crossview uses PostgreSQL for local user accounts when `server.auth.mode` is
+`session` and `database.enabled` is true. Sessions are stored in signed cookies,
+not PostgreSQL. OIDC SSO also works with the database disabled; password login
+and registration are then unavailable. When `server.auth.mode` is `header` or
+`none`, the database is not used. You can:
 
 1. **Use Included PostgreSQL** (Helm/Kubernetes)
    - Automatically deployed with the application
@@ -166,7 +172,7 @@ Crossview supports three authentication modes via `server.auth.mode` (or `AUTH_M
 
 | Mode     | Description | Database required |
 |----------|-------------|-------------------|
-| `session` | Default. Username/password or SSO; identity stored in session (PostgreSQL). | Yes |
+| `session` | Default. Signed-cookie sessions; local password accounts and/or SSO. | For password login; optional for OIDC SSO |
 | `header`  | Trust identity from an HTTP header set by an upstream proxy (e.g. OAuth2 Proxy, Ingress auth). No login form. | No |
 | `none`    | No authentication (development or trusted networks). All requests are treated as an anonymous user. | No |
 
@@ -182,7 +188,16 @@ When `mode` is `header` or `none`, the application does not connect to the datab
 
 ### Session Configuration
 
-Sessions are used only when `server.auth.mode` is `session`. Session data is stored in PostgreSQL. Configuration:
+Sessions are used only when `server.auth.mode` is `session`. Session data is
+stored in signed cookies. With a database, the session user ID resolves to the
+current stored account; without a database, SSO identity is read from the signed
+session. Keep `SESSION_SECRET` private and stable across replicas.
+
+When the database is disabled, the login page hides username/password inputs,
+the password Sign In button, and the "Or continue with" divider. Configured SSO
+buttons remain available. With a database, both methods are available.
+
+Configuration:
 
 ```yaml
 session:
@@ -211,6 +226,16 @@ When running in `session` auth mode with the database enabled, a default admin a
 > Or via environment variables: `ADMIN_USERNAME` / `ADMIN_PASSWORD`.
 
 ## SSO Configuration
+
+Optional OIDC login-button branding:
+
+| Config file setting | Environment variable | Default |
+|---------------------|----------------------|---------|
+| `sso.oidc.providerName` | `OIDC_PROVIDER_NAME` | Inferred from issuer, otherwise "SSO" |
+| `sso.oidc.providerIcon` | `OIDC_PROVIDER_ICON` | Issuer origin's `/favicon.ico`, if available |
+
+Use a browser-accessible icon URL, preferably HTTPS or a same-origin path.
+Helm values use the same settings under `config.sso.oidc`.
 
 ### OpenID Connect (OIDC)
 
@@ -358,4 +383,3 @@ kubectl exec -n crossview <pod-name> -- env | grep -E "DB_|NODE_|PORT"
 - Check provider logs
 
 See [Troubleshooting Guide](TROUBLESHOOTING.md) for more help.
-

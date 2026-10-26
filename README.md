@@ -66,7 +66,7 @@
 
 - Node.js 20+ (for frontend development)
 - Go 1.24+ (for backend server)
-- PostgreSQL database — only required when using `auth_mode: session` (the default). For local development without a database, set `auth_mode: none` in `config/config.yaml` (see `config/examples/config-none.yaml.example`).
+- PostgreSQL database — required for local username/password login. Session-based OIDC SSO also supports `database.enabled: false` (see [SSO Setup](docs/SSO_SETUP.md)). For local development without authentication, set `server.auth.mode: none` in `config/config.yaml` (see `config/examples/config-none.yaml.example`).
 - Kubernetes config file at `~/.kube/config` (or set `KUBECONFIG` env var)
 
 ### Install Dependencies

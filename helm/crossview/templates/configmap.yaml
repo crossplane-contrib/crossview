@@ -42,6 +42,8 @@ data:
   OIDC_USERINFO_URL: {{ .Values.config.sso.oidc.userInfoURL | default "" | quote }}
   OIDC_CALLBACK_URL: {{ .Values.config.sso.oidc.callbackURL | default "http://localhost:3001/api/auth/oidc/callback" | quote }}
   OIDC_SCOPE: {{ .Values.config.sso.oidc.scope | default "openid profile email" | quote }}
+  OIDC_PROVIDER_NAME: {{ .Values.config.sso.oidc.providerName | default "" | quote }}
+  OIDC_PROVIDER_ICON: {{ .Values.config.sso.oidc.providerIcon | default "" | quote }}
   OIDC_USERNAME_ATTRIBUTE: {{ .Values.config.sso.oidc.usernameAttribute | default "preferred_username" | quote }}
   OIDC_EMAIL_ATTRIBUTE: {{ .Values.config.sso.oidc.emailAttribute | default "email" | quote }}
   OIDC_FIRSTNAME_ATTRIBUTE: {{ .Values.config.sso.oidc.firstNameAttribute | default "given_name" | quote }}
@@ -55,4 +57,3 @@ data:
   SAML_FIRSTNAME_ATTRIBUTE: {{ .Values.config.sso.saml.firstNameAttribute | default "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname" | quote }}
   SAML_LASTNAME_ATTRIBUTE: {{ .Values.config.sso.saml.lastNameAttribute | default "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname" | quote }}
 {{- end }}
-
