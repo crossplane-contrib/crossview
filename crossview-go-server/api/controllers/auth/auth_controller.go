@@ -109,13 +109,30 @@ func (c *AuthController) Check(ctx *gin.Context) {
 			ctx.JSON(http.StatusOK, unauthenticated)
 			return
 		}
-		user, err := c.userRepo.FindByID(userID.(uint))
+		uid, _ := userID.(uint)
+		user, err := c.userRepo.FindByID(uid)
 		if err != nil || user == nil {
-			ctx.JSON(http.StatusOK, unauthenticated)
-			return
+			if c.userRepo.DB() == nil {
+				user = &models.User{
+					ID:       uid,
+					Username: sessionString(session.Get("username")),
+					Email:    sessionString(session.Get("email")),
+					Role:     sessionString(session.Get("userRole")),
+				}
+			} else {
+				ctx.JSON(http.StatusOK, unauthenticated)
+				return
+			}
 		}
 		ctx.JSON(http.StatusOK, userResponse(user))
 	}
+}
+
+func sessionString(v interface{}) string {
+	if s, ok := v.(string); ok {
+		return s
+	}
+	return ""
 }
 
 func authRandomPassword() string {

@@ -22,6 +22,30 @@ export const Login = () => {
   const [authState, setAuthState] = useState(null);
   const [ssoStatus, setSsoStatus] = useState(null);
 
+  const ssoIssuer = ssoStatus?.oidc?.issuer || '';
+  const providerName = ssoStatus?.oidc?.providerName || (() => {
+    const lower = ssoIssuer.toLowerCase();
+    if (lower.includes('keycloak')) return 'Keycloak';
+    if (lower.includes('okta')) return 'Okta';
+    if (lower.includes('auth0')) return 'Auth0';
+    if (lower.includes('azure') || lower.includes('microsoft')) return 'Microsoft Entra';
+    if (lower.includes('google')) return 'Google';
+    if (lower.includes('gitlab')) return 'GitLab';
+    if (lower.includes('github')) return 'GitHub';
+    try {
+      const host = new URL(ssoIssuer).hostname;
+      if (host === 'localhost' || host === '127.0.0.1' || /^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+        return 'SSO';
+      }
+      return host.charAt(0).toUpperCase() + host.slice(1);
+    } catch {
+      return 'SSO';
+    }
+  })();
+  const providerIcon = ssoStatus?.oidc?.providerIcon || (() => {
+    try { return `${new URL(ssoIssuer).origin}/favicon.ico`; } catch { return ''; }
+  })();
+
   useEffect(() => {
     if (user) {
       navigate('/');
@@ -319,14 +343,27 @@ export const Login = () => {
                           w="20px"
                           h="20px"
                           borderRadius="sm"
-                          bg="blue.500"
+                          bg="transparent"
                           display="flex"
                           alignItems="center"
                           justifyContent="center"
+                          overflow="hidden"
+                          border="1px solid"
+                          borderColor={getBorderColor(colorMode, 'default')}
                         >
-                          <Text color="white" fontSize="xs" fontWeight="bold">O</Text>
+                          <img
+                            src={providerIcon}
+                            alt={`${providerName} icon`}
+                            width="20"
+                            height="20"
+                            style={{ objectFit: 'contain', display: 'block' }}
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                          {!providerIcon && (
+                            <Text color="white" fontSize="xs" fontWeight="bold">O</Text>
+                          )}
                         </Box>
-                        Sign in with OIDC
+                        Sign in with {providerName}
                       </Button>
                     )}
                     {ssoStatus.saml.enabled && (

@@ -43,6 +43,8 @@ sso:
     emailAttribute: email
     firstNameAttribute: given_name
     lastNameAttribute: family_name
+    providerName: Keycloak
+    providerIcon: http://localhost:8080/favicon.ico
   saml:
     enabled: true
     entryPoint: http://localhost:8080/realms/crossview/protocol/saml

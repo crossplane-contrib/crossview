@@ -30,7 +30,10 @@ func (c *SSOController) GetStatus(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"enabled": ssoConfig.Enabled,
 		"oidc": gin.H{
-			"enabled": ssoConfig.OIDC.Enabled,
+			"enabled":       ssoConfig.OIDC.Enabled,
+			"issuer":        ssoConfig.OIDC.Issuer,
+			"providerName":  ssoConfig.OIDC.ProviderName,
+			"providerIcon":  ssoConfig.OIDC.ProviderIcon,
 		},
 		"saml": gin.H{
 			"enabled": ssoConfig.SAML.Enabled,
@@ -84,6 +87,8 @@ func (c *SSOController) HandleOIDCCallback(ctx *gin.Context) {
 
 	session := sessions.Default(ctx)
 	session.Set("userId", user.ID)
+	session.Set("username", user.Username)
+	session.Set("email", user.Email)
 	session.Set("userRole", user.Role)
 	if err := session.Save(); err != nil {
 		c.logger.Errorf("Failed to save session: %s", err.Error())
@@ -133,6 +138,8 @@ func (c *SSOController) HandleSAMLCallback(ctx *gin.Context) {
 
 	session := sessions.Default(ctx)
 	session.Set("userId", user.ID)
+	session.Set("username", user.Username)
+	session.Set("email", user.Email)
 	session.Set("userRole", user.Role)
 	if err := session.Save(); err != nil {
 		c.logger.Errorf("Failed to save session: %s", err.Error())

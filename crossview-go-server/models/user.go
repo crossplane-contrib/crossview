@@ -48,6 +48,10 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
+func (r *UserRepository) DB() *gorm.DB {
+	return r.db
+}
+
 func (r *UserRepository) Create(user *User) error {
 	if r.db == nil {
 		return nil
@@ -179,11 +183,17 @@ func (r *UserRepository) AutoMigrate() error {
 }
 
 func (r *UserRepository) FindOrCreateSSOUser(username, email, firstName, lastName string) (*User, error) {
-	if r.db == nil {
-		return nil, fmt.Errorf("database not available")
-	}
 	if username == "" && email == "" {
 		return nil, fmt.Errorf("username or email is required from SSO provider")
+	}
+
+	if r.db == nil {
+		return &User{
+			ID:       hashStringToUint(username + email),
+			Username: username,
+			Email:    email,
+			Role:     "user",
+		}, nil
 	}
 
 	var user *User
@@ -288,4 +298,12 @@ func generateRandomPassword() string {
 		b[i] = charset[b[i]%byte(len(charset))]
 	}
 	return string(b)
+}
+
+func hashStringToUint(s string) uint {
+	var h uint32
+	for i := 0; i < len(s); i++ {
+		h = 31*h + uint32(s[i])
+	}
+	return uint(h)
 }
