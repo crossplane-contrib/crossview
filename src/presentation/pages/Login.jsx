@@ -300,6 +300,7 @@ export const Login = () => {
               {/* SSO Login Options */}
               {(ssoStatus.oidc.enabled || ssoStatus.saml.enabled) && (
                 <>
+                  {databaseEnabled && (
                     <HStack spacing={4} align="center" w="100%">
                       <Box h="1px" flex={1} bg={getBorderColor(colorMode, 'gray')} />
                       <Text
@@ -314,6 +315,7 @@ export const Login = () => {
                       </Text>
                       <Box h="1px" flex={1} bg={getBorderColor(colorMode, 'gray')} />
                     </HStack>
+                  )}
                   <VStack spacing={3} align="stretch" w="100%">
                     {ssoStatus.oidc.enabled && (
                       <Button
