@@ -21,6 +21,7 @@ type Env struct {
 	LogLevel          string `mapstructure:"LOG_LEVEL"`
 	SessionSecret     string `mapstructure:"SESSION_SECRET"`
 	CORSOrigin        string `mapstructure:"CORS_ORIGIN"`
+	BasePath          string `mapstructure:"BASE_PATH"`
 	AuthMode          string `mapstructure:"AUTH_MODE"`
 	AuthTrustedHeader string `mapstructure:"AUTH_TRUSTED_HEADER"`
 	AuthCreateUsers   bool   `mapstructure:"AUTH_CREATE_USERS"`
@@ -128,6 +129,8 @@ func NewEnv() Env {
 	env.CORSOrigin = getEnvOrDefault("CORS_ORIGIN",
 		getConfigValue("server.cors.origin", viper.GetString("CORS_ORIGIN"),
 			"http://localhost:5173"))
+	env.BasePath = NormalizeBasePath(getEnvOrDefault("BASE_PATH",
+		getConfigValue("server.basePath", viper.GetString("BASE_PATH"), "")))
 	env.AuthMode = getEnvOrDefault("AUTH_MODE", getEnvOrDefault("AUTH_MODE",
 		getConfigValue("server.auth.mode", viper.GetString("AUTH_MODE"), "session")))
 

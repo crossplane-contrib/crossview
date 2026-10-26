@@ -1,5 +1,6 @@
+import { withBasePath } from '../../basePath';
 export class AuthService {
-  constructor(apiBaseUrl = '/api') {
+  constructor(apiBaseUrl = withBasePath('/api')) {
     this.apiBaseUrl = apiBaseUrl;
   }
 

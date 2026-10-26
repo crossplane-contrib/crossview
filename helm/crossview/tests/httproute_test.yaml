@@ -59,6 +59,39 @@ tests:
       - equal:
           path: spec.rules[0].backendRefs[0].name
           value: RELEASE-NAME-crossview-service
+
+  - it: should match the base path when one is set
+    set:
+      config:
+        server:
+          basePath: /crossview
+      gatewayAPI:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.rules[0].matches[0].path.type
+          value: PathPrefix
+      - equal:
+          path: spec.rules[0].matches[0].path.value
+          value: /crossview
+
+  - it: should keep explicit rule matches when a base path is set
+    set:
+      config:
+        server:
+          basePath: /crossview
+      gatewayAPI:
+        enabled: true
+        httpRoute:
+          rules:
+            - matches:
+                - path:
+                    type: Exact
+                    value: /custom
+    asserts:
+      - equal:
+          path: spec.rules[0].matches[0].path.value
+          value: /custom
       - equal:
           path: spec.rules[0].backendRefs[0].port
           value: 80

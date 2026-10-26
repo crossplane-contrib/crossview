@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -425,4 +426,49 @@ func TestSSOController_HandleSAMLCallback_ServiceError(t *testing.T) {
 	if location != expectedLocation {
 		t.Errorf("Expected redirect to '%s', got '%s'", expectedLocation, location)
 	}
+}
+
+func TestSSOController_BasePath(t *testing.T) {
+	router := setupTestRouter()
+	logger := setupTestLogger()
+	env := setupTestEnv()
+	env.CORSOrigin = "https://crossview.example.com"
+	env.BasePath = "/crossview"
+	mockService := setupMockSSOService()
+
+	var gotCallback string
+	mockService.InitiateOIDCFunc = func(ctx context.Context, callbackURL string) (string, error) {
+		gotCallback = callbackURL
+		return "https://idp.example.com/authorize", nil
+	}
+	mockService.HandleOIDCCallbackFunc = func(ctx context.Context, code, state string, callbackURL string) (*models.User, error) {
+		gotCallback = callbackURL
+		return nil, errors.New("boom")
+	}
+
+	controller := NewSSOController(logger, env, mockService)
+	router.GET("/api/auth/oidc", controller.InitiateOIDC)
+	router.GET("/api/auth/oidc/callback", controller.HandleOIDCCallback)
+
+	t.Run("the callback URL carries the base path", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/api/auth/oidc", nil)
+		req.Host = "crossview.example.com"
+		req.Header.Set("X-Forwarded-Proto", "https")
+		router.ServeHTTP(httptest.NewRecorder(), req)
+
+		if want := "https://crossview.example.com/crossview/api/auth/oidc/callback"; gotCallback != want {
+			t.Errorf("callback URL = %q, want %q", gotCallback, want)
+		}
+	})
+
+	t.Run("a failed login returns to the UI under the base path", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/api/auth/oidc/callback?code=abc&state=s", nil)
+		req.Host = "crossview.example.com"
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if want := "https://crossview.example.com/crossview/login?error=sso_failed"; w.Header().Get("Location") != want {
+			t.Errorf("Location = %q, want %q", w.Header().Get("Location"), want)
+		}
+	})
 }

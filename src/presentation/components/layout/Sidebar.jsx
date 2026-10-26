@@ -14,6 +14,7 @@ import { colors, getBorderColor, getTextColor, getBackgroundColor, getSidebarCol
 import appPackageJson from '../../../../package.json';
 import { useVersionCheck } from '../../hooks/useVersionCheck.js';
 import { FiArrowUp } from 'react-icons/fi';
+import { withBasePath } from '../../../basePath';
 
 export const Sidebar = ({ onToggle, onResize }) => {
   const appVersion = appPackageJson.version;
@@ -266,7 +267,7 @@ export const Sidebar = ({ onToggle, onResize }) => {
             {!isCollapsed && (
               <HStack spacing={3} align="center" flex={1}>
                 <Image 
-                  src="/images/cross-view-logo-sidebar.svg" 
+                  src={withBasePath('/images/cross-view-logo-sidebar.svg')} 
                   alt="Crossview Logo" 
                   h="32px"
                   w="auto"

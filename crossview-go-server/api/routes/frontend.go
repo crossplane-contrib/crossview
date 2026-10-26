@@ -1,9 +1,12 @@
 package routes
 
 import (
+	"encoding/json"
+	"html"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"github.com/gin-gonic/gin"
 	"crossview-go-server/lib"
 )
@@ -11,15 +14,18 @@ import (
 type FrontendRoutes struct {
 	logger  lib.Logger
 	handler lib.RequestHandler
+	env     lib.Env
 }
 
 func NewFrontendRoutes(
 	logger lib.Logger,
 	handler lib.RequestHandler,
+	env lib.Env,
 ) FrontendRoutes {
 	return FrontendRoutes{
 		logger:  logger,
 		handler: handler,
+		env:     env,
 	}
 }
 
@@ -50,12 +56,20 @@ func (r FrontendRoutes) Setup() {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
 			return
 		}
-		indexPath := filepath.Join(distPath, "index.html")
-		if _, err := os.Stat(indexPath); err == nil {
-			c.File(indexPath)
-		} else {
+		index, err := os.ReadFile(filepath.Join(distPath, "index.html"))
+		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
+			return
 		}
+		c.Data(http.StatusOK, "text/html; charset=utf-8", injectBasePath(index, r.env.BasePath))
 	})
 }
 
+
+// injectBasePath points the page's relative URLs at basePath and tells the frontend
+// where it is mounted. The build uses relative asset URLs, so one image works at any prefix.
+func injectBasePath(index []byte, basePath string) []byte {
+	encoded, _ := json.Marshal(basePath)
+	tags := `<base href="` + html.EscapeString(basePath+"/") + `"><script>window.__BASE_PATH__=` + string(encoded) + `;</script>`
+	return []byte(strings.Replace(string(index), "<head>", "<head>"+tags, 1))
+}

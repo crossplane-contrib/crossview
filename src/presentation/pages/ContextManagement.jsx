@@ -13,6 +13,7 @@ import { useState, useRef } from 'react';
 import { Container } from '../components/common/Container.jsx';
 import { Dialog } from '../components/common/Dialog.jsx';
 import { useAppContext } from '../providers/AppProvider.jsx';
+import { withBasePath } from '../../basePath';
 
 const MAX_CONTEXT_BADGE_LABEL_LENGTH = 8;
 
@@ -101,7 +102,7 @@ export const ContextManagement = () => {
         return;
       }
 
-      const response = await fetch('/api/contexts/add', {
+      const response = await fetch(withBasePath('/api/contexts/add'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

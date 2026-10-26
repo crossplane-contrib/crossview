@@ -242,3 +242,23 @@ tests:
           path: data.OIDC_USERINFO_URL
           value: "http://idp.idp.svc.cluster.local:5556/userinfo"
 
+  - it: should default BASE_PATH to empty
+    set:
+      secrets:
+        dbPassword: test-password
+    asserts:
+      - equal:
+          path: data.BASE_PATH
+          value: ""
+
+  - it: should pass config.server.basePath as BASE_PATH
+    set:
+      secrets:
+        dbPassword: test-password
+      config:
+        server:
+          basePath: /crossview
+    asserts:
+      - equal:
+          path: data.BASE_PATH
+          value: "/crossview"

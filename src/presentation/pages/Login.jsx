@@ -10,6 +10,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../providers/AppProvider.jsx';
 import { colors, getBorderColor, getBackgroundColor, getTextColor } from '../utils/theme.js';
+import { withBasePath } from '../../basePath';
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -162,7 +163,7 @@ export const Login = () => {
             >
               <Box
                 as="img"
-                src="/images/crossview-logo.svg"
+                src={withBasePath('/images/crossview-logo.svg')}
                 alt="Crossview Logo"
                 w="100%"
                 h="100%"

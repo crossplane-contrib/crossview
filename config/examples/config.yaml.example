@@ -27,6 +27,7 @@ server:
     maxConcurrency: 10
   log:
     level: info  # Options: debug, info, warn, error, fatal, panic
+  basePath: ""  # Optional URL prefix, e.g. /crossview; cors.origin stays the origin without it
   cors:
     origin: http://localhost:5173
     credentials: true

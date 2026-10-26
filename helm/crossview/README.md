@@ -91,6 +91,7 @@ The following table lists the configurable parameters and their default values:
 | `app.replicas`                   | Number of replicas                                                          | `1`                                        |
 | `database.enabled`               | Enable bundled PostgreSQL                                                   | `true`                                     |
 | `config.ref`                     | Reference existing ConfigMap (skips chart-generated config)                 | `""`                                       |
+| `config.server.basePath`         | URL prefix to serve Crossview under (e.g. `/crossview`); the default HTTPRoute path follows it | `""`                                        |
 | `config.server.contextAliases`   | Map of kube context names to short UI labels                                | `{}`                                        |
 | `config.server.managed.cacheTTLSeconds` | Managed resources cache TTL per context (seconds)                 | `300`                                       |
 | `config.server.managed.pageSize` | Page size for per-type Kubernetes LIST calls                           | `1000`                                      |

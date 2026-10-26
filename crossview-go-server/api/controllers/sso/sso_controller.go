@@ -59,14 +59,14 @@ func (c *SSOController) HandleOIDCCallback(ctx *gin.Context) {
 
 	if errorParam != "" {
 		c.logger.Warnf("OIDC callback error: %s", errorParam)
-		frontendURL := c.env.CORSOrigin
+		frontendURL := c.env.FrontendURL()
 		ctx.Redirect(http.StatusFound, frontendURL+"/login?error=sso_failed")
 		return
 	}
 
 	if code == "" {
 		c.logger.Warn("OIDC callback missing code parameter")
-		frontendURL := c.env.CORSOrigin
+		frontendURL := c.env.FrontendURL()
 		ctx.Redirect(http.StatusFound, frontendURL+"/login?error=sso_failed")
 		return
 	}
@@ -77,7 +77,7 @@ func (c *SSOController) HandleOIDCCallback(ctx *gin.Context) {
 	user, err := c.ssoService.HandleOIDCCallback(ctx.Request.Context(), code, state, callbackURL)
 	if err != nil {
 		c.logger.Errorf("OIDC callback failed: %s", err.Error())
-		frontendURL := c.env.CORSOrigin
+		frontendURL := c.env.FrontendURL()
 		ctx.Redirect(http.StatusFound, frontendURL+"/login?error=sso_failed")
 		return
 	}
@@ -87,13 +87,13 @@ func (c *SSOController) HandleOIDCCallback(ctx *gin.Context) {
 	session.Set("userRole", user.Role)
 	if err := session.Save(); err != nil {
 		c.logger.Errorf("Failed to save session: %s", err.Error())
-		frontendURL := c.env.CORSOrigin
+		frontendURL := c.env.FrontendURL()
 		ctx.Redirect(http.StatusFound, frontendURL+"/login?error=sso_failed")
 		return
 	}
 
 	c.logger.Infof("OIDC login successful: userId=%d, username=%s", user.ID, user.Username)
-	frontendURL := c.env.CORSOrigin
+	frontendURL := c.env.FrontendURL()
 	ctx.Redirect(http.StatusFound, frontendURL)
 }
 
@@ -115,7 +115,7 @@ func (c *SSOController) HandleSAMLCallback(ctx *gin.Context) {
 	samlResponse := ctx.PostForm("SAMLResponse")
 	if samlResponse == "" {
 		c.logger.Warn("SAML callback missing SAMLResponse")
-		frontendURL := c.env.CORSOrigin
+		frontendURL := c.env.FrontendURL()
 		ctx.Redirect(http.StatusFound, frontendURL+"/login?error=sso_failed")
 		return
 	}
@@ -126,7 +126,7 @@ func (c *SSOController) HandleSAMLCallback(ctx *gin.Context) {
 	user, err := c.ssoService.HandleSAMLCallback(ctx.Request.Context(), samlResponse, callbackURL)
 	if err != nil {
 		c.logger.Errorf("SAML callback failed: %s", err.Error())
-		frontendURL := c.env.CORSOrigin
+		frontendURL := c.env.FrontendURL()
 		ctx.Redirect(http.StatusFound, frontendURL+"/login?error=sso_failed")
 		return
 	}
@@ -136,13 +136,13 @@ func (c *SSOController) HandleSAMLCallback(ctx *gin.Context) {
 	session.Set("userRole", user.Role)
 	if err := session.Save(); err != nil {
 		c.logger.Errorf("Failed to save session: %s", err.Error())
-		frontendURL := c.env.CORSOrigin
+		frontendURL := c.env.FrontendURL()
 		ctx.Redirect(http.StatusFound, frontendURL+"/login?error=sso_failed")
 		return
 	}
 
 	c.logger.Infof("SAML login successful: userId=%d, username=%s", user.ID, user.Username)
-	frontendURL := c.env.CORSOrigin
+	frontendURL := c.env.FrontendURL()
 	ctx.Redirect(http.StatusFound, frontendURL)
 }
 
@@ -165,7 +165,7 @@ func (c *SSOController) buildCallbackURL(ctx *gin.Context, callbackPath string) 
 		callbackURL := url.URL{
 			Scheme: scheme,
 			Host:   host,
-			Path:   callbackPath,
+			Path:   c.env.BasePath + callbackPath,
 		}
 		return callbackURL.String()
 	}
@@ -178,12 +178,12 @@ func (c *SSOController) buildCallbackURL(ctx *gin.Context, callbackPath string) 
 			callbackURL := url.URL{
 				Scheme: originURL.Scheme,
 				Host:   originURL.Host,
-				Path:   callbackPath,
+				Path:   c.env.BasePath + callbackPath,
 			}
 			return callbackURL.String()
 		}
 	}
 
 	// Last resort: use default from config
-	return "http://localhost:3001" + callbackPath
+	return "http://localhost:3001" + c.env.BasePath + callbackPath
 }

@@ -21,6 +21,7 @@ data:
   DB_SSL_CERT: {{ .Values.config.database.ssl.cert | default "" | quote }}
   DB_SSL_KEY: {{ .Values.config.database.ssl.key | default "" | quote }}
   PORT: {{ .Values.config.server.port | default 3001 | quote }}
+  BASE_PATH: {{ .Values.config.server.basePath | default "" | quote }}
 {{- $auth := .Values.config.server.auth | default dict }}
 {{- $authHeader := $auth.header | default dict }}
   AUTH_MODE: {{ $auth.mode | default "none" | quote }}

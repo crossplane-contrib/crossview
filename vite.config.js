@@ -23,6 +23,8 @@ try {
 }
 
 export default defineConfig({
+  // Relative asset URLs: the server sets <base href> so the build works under any base path.
+  base: './',
   plugins: [react()],
   server: {
     proxy: {

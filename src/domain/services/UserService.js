@@ -1,5 +1,6 @@
+import { withBasePath } from '../../basePath';
 export class UserService {
-  constructor(baseUrl = '/api') {
+  constructor(baseUrl = withBasePath('/api')) {
     this.baseUrl = baseUrl;
   }
 

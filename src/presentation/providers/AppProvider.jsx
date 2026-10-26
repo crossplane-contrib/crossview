@@ -7,6 +7,7 @@ import { AuthService } from '../../domain/services/AuthService.js';
 import { UserService } from '../../domain/services/UserService.js';
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { colors } from '../utils/theme.js';
+import { BASE_PATH, withBasePath } from '../../basePath';
 
 const AppContext = createContext(null);
 
@@ -234,7 +235,7 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/config/context-aliases', { credentials: 'include' })
+    fetch(withBasePath('/api/config/context-aliases'), { credentials: 'include' })
       .then((res) => (res.ok ? res.json() : {}))
       .then((data) => {
         if (!cancelled && data && typeof data === 'object') {
@@ -297,7 +298,7 @@ export const AppProvider = ({ children }) => {
 
   return (
     <ChakraProvider value={defaultSystem}>
-      <BrowserRouter>
+      <BrowserRouter basename={BASE_PATH || undefined}>
         <AppContext.Provider value={value}>
           {children}
         </AppContext.Provider>

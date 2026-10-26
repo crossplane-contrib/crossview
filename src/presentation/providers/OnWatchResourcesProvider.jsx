@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAppContext } from './AppProvider.jsx';
+import { withBasePath } from '../../basePath';
 
 const OnWatchResourcesContext = createContext(null);
 
@@ -93,7 +94,7 @@ export const OnWatchResourcesProvider = ({ children }) => {
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
-    const wsUrl = `${protocol}//${host}/api/watch?context=${encodeURIComponent(contextName)}`;
+    const wsUrl = `${protocol}//${host}${withBasePath('/api/watch')}?context=${encodeURIComponent(contextName)}`;
 
     try {
       const ws = new WebSocket(wsUrl);

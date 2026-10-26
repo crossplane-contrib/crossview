@@ -1,6 +1,9 @@
 package commands
 
 import (
+	"net/http"
+	"os"
+
 	"crossview-go-server/api/middlewares"
 	"crossview-go-server/api/routes"
 	"crossview-go-server/lib"
@@ -81,6 +84,11 @@ func (s *ServeCommand) Run() lib.CommandRunner {
 		route.Setup()
 
 		logger.Info("Running server")
+		if env.BasePath != "" {
+			logger.Infof("Serving under base path %s", env.BasePath)
+			_ = http.ListenAndServe(listenAddr(env.ServerPort), lib.WithBasePath(env.BasePath, router.Gin))
+			return
+		}
 		if env.ServerPort == "" {
 			_ = router.Gin.Run()
 		} else {
@@ -109,4 +117,15 @@ func createAdmin(env lib.Env, userRepository models.UserRepository) error {
 		return err
 	}
 	return nil
+}
+
+// listenAddr matches gin's Run(): the configured port, else $PORT, else 8080.
+func listenAddr(port string) string {
+	if port == "" {
+		port = os.Getenv("PORT")
+	}
+	if port == "" {
+		port = "8080"
+	}
+	return ":" + port
 }

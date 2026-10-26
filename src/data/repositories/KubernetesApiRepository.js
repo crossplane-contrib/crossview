@@ -1,7 +1,8 @@
 import { IKubernetesRepository } from '../../domain/repositories/IKubernetesRepository.js';
+import { withBasePath } from '../../basePath';
 
 export class KubernetesApiRepository extends IKubernetesRepository {
-  constructor(apiBaseUrl = '/api') {
+  constructor(apiBaseUrl = withBasePath('/api')) {
     super();
     this.apiBaseUrl = apiBaseUrl;
   }

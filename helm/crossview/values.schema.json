@@ -240,6 +240,7 @@
           "type": "object",
           "properties": {
             "port": { "type": "integer", "default": 3001 },
+            "basePath": { "type": "string", "default": "", "description": "URL prefix to serve Crossview under, e.g. /crossview. Empty serves from the root." },
             "contextAliases": {
               "type": "object",
               "description": "Optional mapping of kube context name to short UI label.",

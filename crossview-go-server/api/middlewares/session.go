@@ -51,8 +51,12 @@ func (m SessionMiddleware) Setup() {
 
 	store := cookie.NewStore([]byte(m.env.SessionSecret))
 
+	cookiePath := m.env.BasePath
+	if cookiePath == "" {
+		cookiePath = "/"
+	}
 	store.Options(sessions.Options{
-		Path:     "/",
+		Path:     cookiePath,
 		MaxAge:   86400,
 		HttpOnly: true,
 		Secure:   m.env.Environment == "production",

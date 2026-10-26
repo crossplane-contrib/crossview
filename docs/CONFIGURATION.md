@@ -85,6 +85,10 @@ SESSION_SECRET=your-secret # Session encryption key (generate with: openssl rand
 CORS_ORIGIN=https://crossview.example.com  # Public root URL of this instance.
                            # Required when using SSO: after login the user is redirected here.
                            # Defaults to http://localhost:5173 — must be overridden in production.
+BASE_PATH=/crossview        # Optional URL prefix to serve under (config: server.basePath, Helm: config.server.basePath).
+                           # Empty serves from the root. CORS_ORIGIN stays the origin without the prefix;
+                           # SSO redirect URIs then include it, e.g. https://crossview.example.com/crossview/api/auth/oidc/callback.
+                           # /api/health stays reachable at the root for probes.
 CONTEXT_ALIASES='{"kind-kind":"KIND","dev-cluster":"DEV"}'
                            # Optional JSON map of kube context name -> short UI label.
 ```
