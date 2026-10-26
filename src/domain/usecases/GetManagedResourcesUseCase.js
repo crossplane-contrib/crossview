@@ -3,9 +3,9 @@ export class GetManagedResourcesUseCase {
     this.kubernetesRepository = kubernetesRepository;
   }
 
-  async execute(context = null, namespace = null, forceRefresh = false) {
+  async execute(context = null, namespace = null, forceRefresh = false, options = {}) {
     try {
-      const result = await this.kubernetesRepository.getManagedResources(context, forceRefresh);
+      const result = await this.kubernetesRepository.getManagedResources(context, forceRefresh, options);
       const resources = result.items || [];
       const fromCache = result.fromCache || false;
       
@@ -30,7 +30,12 @@ export class GetManagedResourcesUseCase {
         spec: resource.spec || {},
       }));
       
-      return { items: mapped, fromCache };
+      return {
+        items: mapped,
+        fromCache,
+        totalCount: typeof result.totalCount === 'number' ? result.totalCount : mapped.length,
+        continueToken: result.continueToken || null
+      };
     } catch (error) {
       throw new Error(`Failed to get managed resources: ${error.message}`);
     }

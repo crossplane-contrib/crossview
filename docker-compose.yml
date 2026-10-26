@@ -13,6 +13,10 @@ services:
       - KUBECONFIG=/app/.kube/config
       - SESSION_SECRET=crossview-secret-key-change-in-production
       - LOG_LEVEL=info
+      - MANAGED_CACHE_TTL_SECONDS=300
+      - MANAGED_PAGE_SIZE=1000
+      - MANAGED_MAX_ITEMS_PER_TYPE=5000
+      - MANAGED_MAX_CONCURRENCY=10
     volumes:
       - ./config/config.yaml:/app/config/config.yaml:ro
       - ~/.kube/config:/app/.kube/config:ro

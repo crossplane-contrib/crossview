@@ -26,6 +26,8 @@ type OIDCConfig struct {
 	EmailAttribute     string
 	FirstNameAttribute string
 	LastNameAttribute  string
+	ProviderName       string
+	ProviderIcon       string
 }
 
 type SAMLConfig struct {
@@ -125,6 +127,16 @@ func getOIDCConfig(enabledStr string) OIDCConfig {
 			os.Getenv("OIDC_LASTNAME_ATTRIBUTE"),
 			viper.GetString("sso.oidc.lastNameAttribute"),
 			"family_name",
+		),
+		ProviderName: firstNonEmpty(
+			os.Getenv("OIDC_PROVIDER_NAME"),
+			viper.GetString("sso.oidc.providerName"),
+			"",
+		),
+		ProviderIcon: firstNonEmpty(
+			os.Getenv("OIDC_PROVIDER_ICON"),
+			viper.GetString("sso.oidc.providerIcon"),
+			"",
 		),
 	}
 }

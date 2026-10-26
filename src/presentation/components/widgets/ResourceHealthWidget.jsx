@@ -1,15 +1,49 @@
 import { Box, Text, VStack, HStack, Spinner } from '@chakra-ui/react';
 import { FiCheckCircle, FiXCircle, FiHelpCircle } from 'react-icons/fi';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppContext } from '../../providers/AppProvider.jsx';
 import { GetCompositeResourcesUseCase } from '../../../domain/usecases/GetCompositeResourcesUseCase.js';
 import { GetClaimsUseCase } from '../../../domain/usecases/GetClaimsUseCase.js';
 import { Container } from '../common/Container.jsx';
 
+const EMPTY_HEALTH = { ready: 0, notReady: 0, unknown: 0, total: 0, healthPercentage: 0 };
+
+const summarizeHealth = (compositeResources, claims) => {
+  let ready = 0;
+  let notReady = 0;
+  let unknown = 0;
+
+  [...compositeResources, ...claims].forEach(resource => {
+    const conditions = resource.conditions || [];
+    const readyCondition = conditions.find(c => c.type === 'Ready' || c.type === 'Synced');
+    
+    if (readyCondition) {
+      if (readyCondition.status === 'True') {
+        ready++;
+      } else {
+        notReady++;
+      }
+    } else if (conditions.length > 0) {
+      const trueCondition = conditions.find(c => c.status === 'True');
+      if (trueCondition) {
+        ready++;
+      } else {
+        unknown++;
+      }
+    } else {
+      unknown++;
+    }
+  });
+
+  const total = ready + notReady + unknown;
+  const healthPercentage = total > 0 ? Math.round((ready / total) * 100) : 0;
+
+  return { ready, notReady, unknown, total, healthPercentage };
+};
+
 export const ResourceHealthWidget = () => {
   const { kubernetesRepository, selectedContext, colorMode } = useAppContext();
-  const [compositeResources, setCompositeResources] = useState([]);
-  const [claims, setClaims] = useState([]);
+  const [health, setHealth] = useState(EMPTY_HEALTH);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -27,29 +61,37 @@ export const ResourceHealthWidget = () => {
           ? selectedContext 
           : selectedContext.name || selectedContext;
         
-        // Load both composite resources and claims in parallel with small limits for health calculation
+        // Load both composite resources and claims in parallel. No limit is
+        // passed: health is an aggregate over the whole cluster, and a limit
+        // would score only the newest N resources (the use cases sort by
+        // creationTimestamp descending) while labelling the result "Total".
         const [compositeData, claimsData] = await Promise.all([
           new GetCompositeResourcesUseCase(kubernetesRepository)
-            .execute(contextName, 50, null)
+            .execute(contextName, null, null)
             .catch(err => {
               console.warn('Failed to fetch composite resources:', err.message);
               return { items: [] };
             }),
           new GetClaimsUseCase(kubernetesRepository)
-            .execute(contextName, 50, null)
+            .execute(contextName, null, null)
             .catch(err => {
               console.warn('Failed to fetch claims:', err.message);
               return { items: [] };
             }),
         ]);
         
-        setCompositeResources(Array.isArray(compositeData) ? compositeData : (compositeData?.items || []));
-        setClaims(Array.isArray(claimsData) ? claimsData : (claimsData?.items || []));
+        // Reduce to counters before storing. Keeping the resources themselves
+        // in state would retain every composite resource and claim in memory
+        // for as long as the dashboard is open, for a widget that only ever
+        // renders four numbers.
+        setHealth(summarizeHealth(
+          Array.isArray(compositeData) ? compositeData : (compositeData?.items || []),
+          Array.isArray(claimsData) ? claimsData : (claimsData?.items || []),
+        ));
       } catch (err) {
         console.warn('Failed to fetch resource health data:', err.message);
         setError(err.message);
-        setCompositeResources([]);
-        setClaims([]);
+        setHealth(EMPTY_HEALTH);
       } finally {
         setLoading(false);
       }
@@ -57,47 +99,6 @@ export const ResourceHealthWidget = () => {
 
     loadData();
   }, [selectedContext, kubernetesRepository]);
-
-  const health = useMemo(() => {
-    const allResources = [...(compositeResources || []), ...(claims || [])];
-    
-    let ready = 0;
-    let notReady = 0;
-    let unknown = 0;
-
-    allResources.forEach(resource => {
-      const conditions = resource.conditions || [];
-      const readyCondition = conditions.find(c => c.type === 'Ready' || c.type === 'Synced');
-      
-      if (readyCondition) {
-        if (readyCondition.status === 'True') {
-          ready++;
-        } else {
-          notReady++;
-        }
-      } else if (conditions.length > 0) {
-        const trueCondition = conditions.find(c => c.status === 'True');
-        if (trueCondition) {
-          ready++;
-        } else {
-          unknown++;
-        }
-      } else {
-        unknown++;
-      }
-    });
-
-    const total = allResources.length;
-    const healthPercentage = total > 0 ? Math.round((ready / total) * 100) : 0;
-
-    return {
-      ready,
-      notReady,
-      unknown,
-      total,
-      healthPercentage,
-    };
-  }, [compositeResources, claims]);
 
   const getHealthColor = (percentage) => {
     if (percentage >= 80) return 'green';

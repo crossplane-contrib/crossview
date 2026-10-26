@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"crossview-go-server/api/middlewares"
 	"crossview-go-server/lib"
 	"crossview-go-server/services"
 
@@ -30,7 +31,10 @@ func (c *SSOController) GetStatus(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"enabled": ssoConfig.Enabled,
 		"oidc": gin.H{
-			"enabled": ssoConfig.OIDC.Enabled,
+			"enabled":      ssoConfig.OIDC.Enabled,
+			"issuer":       ssoConfig.OIDC.Issuer,
+			"providerName": ssoConfig.OIDC.ProviderName,
+			"providerIcon": ssoConfig.OIDC.ProviderIcon,
 		},
 		"saml": gin.H{
 			"enabled": ssoConfig.SAML.Enabled,
@@ -83,8 +87,7 @@ func (c *SSOController) HandleOIDCCallback(ctx *gin.Context) {
 	}
 
 	session := sessions.Default(ctx)
-	session.Set("userId", user.ID)
-	session.Set("userRole", user.Role)
+	middlewares.SetSSOIdentity(session, user)
 	if err := session.Save(); err != nil {
 		c.logger.Errorf("Failed to save session: %s", err.Error())
 		frontendURL := c.env.CORSOrigin
@@ -132,8 +135,7 @@ func (c *SSOController) HandleSAMLCallback(ctx *gin.Context) {
 	}
 
 	session := sessions.Default(ctx)
-	session.Set("userId", user.ID)
-	session.Set("userRole", user.Role)
+	middlewares.SetSSOIdentity(session, user)
 	if err := session.Save(); err != nil {
 		c.logger.Errorf("Failed to save session: %s", err.Error())
 		frontendURL := c.env.CORSOrigin

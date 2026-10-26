@@ -131,7 +131,7 @@ database:
   enabled: true
   image:
     repository: postgres
-    tag: "latest"
+    tag: "18-alpine"
   resources:
     requests:
       memory: "256Mi"
@@ -178,6 +178,11 @@ config:
     # Optional short labels for kube contexts shown in UI badges.
     # Example: { kind-kind: KIND, dev-cluster: DEV }
     contextAliases: {}
+    managed:
+      cacheTTLSeconds: 300
+      pageSize: 1000
+      maxItemsPerType: 5000
+      maxConcurrency: 10
     auth:
       mode: session
       trustedHeader: X-Auth-User
@@ -209,6 +214,8 @@ config:
   #     userInfoURL: ""
   #     callbackURL: http://localhost:3001/api/auth/oidc/callback
   #     scope: openid profile email
+  #     providerName: "Company SSO"
+  #     providerIcon: "https://example.com/sso-icon.svg"
   #     usernameAttribute: preferred_username
   #     emailAttribute: email
   #     firstNameAttribute: given_name
@@ -225,6 +232,9 @@ config:
   sso:
     oidc:
       enabled: false
+      # Optional login-button branding; empty values use issuer-based defaults.
+      providerName: ""
+      providerIcon: ""
     saml:
       enabled: false
 

@@ -1,0 +1,250 @@
+apiVersion: platform.example.org/v1alpha1
+kind: IdentityProvider
+metadata:
+  name: identity
+  namespace: identity
+spec:
+  crossplane:
+    compositionRef:
+      name: identityprovider
+    resourceRefs:
+        - apiVersion: platform.example.org/v1alpha1
+          kind: IdentityGroup
+          name: admins
+          namespace: identity
+        - apiVersion: platform.example.org/v1alpha1
+          kind: IdentityUser
+          name: user-1
+          namespace: identity
+        - apiVersion: kubernetes.crossplane.io/v1alpha2
+          kind: Object
+          name: identity-deploy
+          namespace: identity
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: platform.example.org/v1alpha1
+kind: IdentityGroup
+metadata:
+  name: admins
+  namespace: identity
+spec:
+  crossplane:
+    compositionRef:
+      name: identitygroup
+    resourceRefs:
+        - apiVersion: kubernetes.crossplane.io/v1alpha2
+          kind: Object
+          name: admins-group
+          namespace: identity
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: platform.example.org/v1alpha1
+kind: IdentityUser
+metadata:
+  name: user-1
+  namespace: identity
+spec:
+  crossplane:
+    compositionRef:
+      name: identityuser
+    resourceRefs:
+        - apiVersion: kubernetes.crossplane.io/v1alpha2
+          kind: Object
+          name: user-1-user
+          namespace: identity
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: platform.example.org/v1alpha1
+kind: IdentityClient
+metadata:
+  name: web-a
+  namespace: identity
+spec:
+  crossplane:
+    compositionRef:
+      name: identityclient
+    resourceRefs:
+        - apiVersion: kubernetes.crossplane.io/v1alpha2
+          kind: Object
+          name: web-a-client
+          namespace: identity
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: platform.example.org/v1alpha1
+kind: IdentityClient
+metadata:
+  name: dashboard
+  namespace: identity
+spec:
+  crossplane:
+    compositionRef:
+      name: identityclient
+    resourceRefs:
+        - apiVersion: kubernetes.crossplane.io/v1alpha2
+          kind: Object
+          name: dashboard-client
+          namespace: identity
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: platform.example.org/v1alpha1
+kind: IdentityClient
+metadata:
+  name: budgetapp
+  namespace: identity
+spec:
+  crossplane:
+    compositionRef:
+      name: identityclient
+    resourceRefs:
+        - apiVersion: kubernetes.crossplane.io/v1alpha2
+          kind: Object
+          name: budgetapp-client
+          namespace: identity
+status:
+  conditions:
+    - type: Ready
+      status: "False"
+    - type: Synced
+      status: "True"
+---
+apiVersion: platform.example.org/v1alpha1
+kind: IdentityClient
+metadata:
+  name: web-b
+  namespace: identity
+spec:
+  crossplane:
+    compositionRef:
+      name: identityclient
+    resourceRefs:
+        - apiVersion: kubernetes.crossplane.io/v1alpha2
+          kind: Object
+          name: web-b-client
+          namespace: identity
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: platform.example.org/v1alpha1
+kind: AuthProxy
+metadata:
+  name: web-a
+  namespace: media
+spec:
+  crossplane:
+    compositionRef:
+      name: authproxy
+    resourceRefs:
+        - apiVersion: platform.example.org/v1alpha1
+          kind: IdentityClient
+          name: web-a
+          namespace: identity
+        - apiVersion: kubernetes.crossplane.io/v1alpha2
+          kind: Object
+          name: web-a-proxy
+          namespace: media
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: platform.example.org/v1alpha1
+kind: AuthProxy
+metadata:
+  name: web-b
+  namespace: encoding
+spec:
+  crossplane:
+    compositionRef:
+      name: authproxy
+    resourceRefs:
+        - apiVersion: platform.example.org/v1alpha1
+          kind: IdentityClient
+          name: web-b
+          namespace: identity
+        - apiVersion: kubernetes.crossplane.io/v1alpha2
+          kind: Object
+          name: web-b-proxy
+          namespace: encoding
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: platform.example.org/v1alpha1
+kind: Dashboard
+metadata:
+  name: dashboard
+  namespace: media
+spec:
+  crossplane:
+    compositionRef:
+      name: dashboard
+    resourceRefs:
+        - apiVersion: platform.example.org/v1alpha1
+          kind: IdentityClient
+          name: dashboard
+          namespace: identity
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: platform.example.org/v1alpha1
+kind: BudgetApp
+metadata:
+  name: budgetapp
+  namespace: media
+spec:
+  crossplane:
+    compositionRef:
+      name: budgetapp
+    resourceRefs:
+        - apiVersion: platform.example.org/v1alpha1
+          kind: IdentityClient
+          name: budgetapp
+          namespace: identity
+        - apiVersion: kubernetes.crossplane.io/v1alpha2
+          kind: Object
+          name: budgetapp-deploy
+          namespace: media
+status:
+  conditions:
+    - type: Ready
+      status: "False"
+    - type: Synced
+      status: "True"

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -39,6 +41,11 @@ type Env struct {
 	SAMLEnabled bool `mapstructure:"SAML_ENABLED"`
 
 	ContextAliases string `mapstructure:"CONTEXT_ALIASES"`
+
+	ManagedCacheTTLSeconds int   `mapstructure:"MANAGED_CACHE_TTL_SECONDS"`
+	ManagedPageSize         int64 `mapstructure:"MANAGED_PAGE_SIZE"`
+	ManagedMaxItemsPerType  int64 `mapstructure:"MANAGED_MAX_ITEMS_PER_TYPE"`
+	ManagedMaxConcurrency   int   `mapstructure:"MANAGED_MAX_CONCURRENCY"`
 }
 
 func NewEnv() Env {
@@ -158,6 +165,27 @@ func NewEnv() Env {
 
 	env.ContextAliases = loadContextAliasesFromEnvOrConfig()
 
+	env.ManagedCacheTTLSeconds = getIntEnvOrConfig(
+		[]string{"MANAGED_CACHE_TTL_SECONDS"},
+		[]string{"server.managed.cacheTTLSeconds"},
+		DefaultManagedCacheTTLSeconds,
+	)
+	env.ManagedPageSize = getInt64EnvOrConfig(
+		[]string{"MANAGED_PAGE_SIZE"},
+		[]string{"server.managed.pageSize"},
+		DefaultManagedPageSize,
+	)
+	env.ManagedMaxItemsPerType = getInt64EnvOrConfig(
+		[]string{"MANAGED_MAX_ITEMS_PER_TYPE"},
+		[]string{"server.managed.maxItemsPerType"},
+		DefaultManagedMaxItemsPerType,
+	)
+	env.ManagedMaxConcurrency = getIntEnvOrConfig(
+		[]string{"MANAGED_MAX_CONCURRENCY"},
+		[]string{"server.managed.maxConcurrency"},
+		DefaultManagedMaxConcurrency,
+	)
+
 	return env
 }
 
@@ -200,6 +228,56 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+const (
+	DefaultManagedCacheTTLSeconds = 300
+	DefaultManagedPageSize        = int64(1000)
+	DefaultManagedMaxItemsPerType = int64(5000)
+	DefaultManagedMaxConcurrency  = 10
+)
+
+func (e Env) ManagedCacheTTL() time.Duration {
+	if e.ManagedCacheTTLSeconds <= 0 {
+		return time.Duration(DefaultManagedCacheTTLSeconds) * time.Second
+	}
+	return time.Duration(e.ManagedCacheTTLSeconds) * time.Second
+}
+
+func getIntEnvOrConfig(envKeys []string, configKeys []string, fallback int) int {
+	for _, k := range envKeys {
+		if raw := strings.TrimSpace(os.Getenv(k)); raw != "" {
+			if v, err := strconv.Atoi(raw); err == nil && v > 0 {
+				return v
+			}
+		}
+	}
+	for _, k := range configKeys {
+		if viper.IsSet(k) {
+			if v := viper.GetInt(k); v > 0 {
+				return v
+			}
+		}
+	}
+	return fallback
+}
+
+func getInt64EnvOrConfig(envKeys []string, configKeys []string, fallback int64) int64 {
+	for _, k := range envKeys {
+		if raw := strings.TrimSpace(os.Getenv(k)); raw != "" {
+			if v, err := strconv.ParseInt(raw, 10, 64); err == nil && v > 0 {
+				return v
+			}
+		}
+	}
+	for _, k := range configKeys {
+		if viper.IsSet(k) {
+			if v := viper.GetInt64(k); v > 0 {
+				return v
+			}
+		}
+	}
+	return fallback
 }
 
 func loadContextAliasesFromEnvOrConfig() string {

@@ -159,10 +159,6 @@ func (k *KubernetesService) SetContext(ctxName string) error {
 	k.dynamicClient = nil
 	delete(k.failedContexts, targetContext)
 
-	// Clear managed resources cache when context changes
-	k.managedResourcesCache = make(map[string]map[string]interface{})
-	k.managedResourcesCacheTime = make(map[string]time.Time)
-
 	if k.isInCluster() {
 		k.logger.Infof("Kubernetes client initialized with context: %s", k.currentContext)
 	} else {

@@ -10,6 +10,10 @@ data:
   DB_PORT: "5432"
   DB_NAME: "crossview"
   DB_USER: "postgres"
+  MANAGED_CACHE_TTL_SECONDS: "300"
+  MANAGED_PAGE_SIZE: "1000"
+  MANAGED_MAX_ITEMS_PER_TYPE: "5000"
+  MANAGED_MAX_CONCURRENCY: "10"
   # DB_PASSWORD should be set via Secret
   # SESSION_SECRET should be set via Secret
   # KUBECONFIG is not needed - uses service account automatically

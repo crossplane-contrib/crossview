@@ -1,3 +1,89 @@
+# [4.7.0](https://github.com/crossplane-contrib/crossview/compare/v4.6.0...v4.7.0) (2026-10-26)
+
+Stable release consolidating the 4.7.0 release candidates and subsequent fixes.
+
+### Features
+
+* **graph:** add a Crossplane dependency graph with live filtering, health filters, rendering limits, and shareable URL state ([#315](https://github.com/crossplane-contrib/crossview/pull/315))
+* **auth:** support database-free OIDC SSO sessions; retain local username/password login when the database is enabled and hide password controls in SSO-only mode ([#322](https://github.com/crossplane-contrib/crossview/pull/322))
+* **sso:** add configurable provider names and icons to the login page, configuration examples, and Helm chart ([#322](https://github.com/crossplane-contrib/crossview/pull/322))
+
+### Bug Fixes
+
+* **dashboard:** count all composite resources in namespace and health widgets instead of a truncated sample
+* **graph:** correct health classification and align graph presentation with resource relations
+* **api:** bound parallel graph resource listing, validate context parameters, and sanitize graph errors
+* **chart:** fix PostgreSQL readiness retries and pin the bundled PostgreSQL image
+* **auth:** preserve SSO identity through database-free session checks and reject password login and registration without a database
+
+### Performance Improvements
+
+* **managed:** add server-side paging and configurable cache TTL, page size, item caps, and concurrency ([#308](https://github.com/crossplane-contrib/crossview/pull/308))
+* **graph:** add scale benchmarks, parallel input fetching, and on-demand health loading
+
+### Security
+
+* **secrets:** return metadata only for Secret details, list responses, and watch events; omit Secret values and key names ([#316](https://github.com/crossplane-contrib/crossview/pull/316), [#318](https://github.com/crossplane-contrib/crossview/pull/318))
+* **deps:** include the npm and Go dependency security updates introduced in the 4.7.0 release candidates
+* **docker:** pin build and runtime base images for reproducible builds
+
+### Documentation
+
+* **community:** introduce the [Crossview topic on Coidea](https://coidea.co/ideas/7cd0876d-92cf-48e7-9db4-d9462ee1e74b/crossview-headlamp-plugin) for updates, public ideas, collaboration, and discussions
+* **sso:** document database-free authentication, provider branding, Helm configuration, and signed-cookie sessions
+* **readme:** refresh the dashboard screenshot
+
+# [4.7.0-rc.4](https://github.com/crossplane-contrib/crossview/compare/v4.7.0-rc.3...v4.7.0-rc.4) (2026-10-22)
+
+
+### Features
+
+* **graph:** add Crossplane dependency graph page with XRD→Composition→Function→XR→Composed Resource topology, live filtering, smart limits, render budget, URL-state sharing, and ResourceRelations-consistent styling ([#315](https://github.com/crossplane-contrib/crossview/pull/315))
+* **resources:** add server-side paging for managed resources with configurable limits and continuation tokens ([#308](https://github.com/crossplane-contrib/crossview/pull/308))
+* **secrets:** return metadata only for v1/Secret resources (no data/stringData/key names) for security ([#316](https://github.com/crossplane-contrib/crossview/pull/316))
+
+
+### Bug Fixes
+
+* **graph:** fix composed resource status flagging, keep Compositions in health filters, align node/edge styles with ResourceRelations tab
+* **api:** cap parallel XR kind listing at 8 concurrent requests, validate context parameter, sanitize error responses, use configured managed item cap
+
+
+### Performance Improvements
+
+* **graph:** add benchmarks for 1k/10k/100k node graphs, parallel XR fetching with warnings for unavailable kinds
+* **managed resources:** configurable page size, per-type item cap, cache TTL
+
+# [4.7.0-rc.3](https://github.com/crossplane-contrib/crossview/compare/v4.7.0-rc.2...v4.7.0-rc.3) (2026-10-04)
+
+
+### Performance Improvements
+
+* **managed:** add server-side paging and tunable listing for large MR counts ([1478618](https://github.com/crossplane-contrib/crossview/commit/1478618975b641ab2d6e9958f1b29cfa00e7a829))
+
+# [4.7.0-rc.2](https://github.com/crossplane-contrib/crossview/compare/v4.7.0-rc.1...v4.7.0-rc.2) (2026-09-22)
+
+
+### Bug Fixes
+
+* **dashboard:** count all composite resources in namespace and health widgets instead of a truncated sample ([9cb06f6](https://github.com/crossplane-contrib/crossview/commit/9cb06f63699a6a24782f1793cc2545f1c2b15c53))
+
+# [4.7.0-rc.1](https://github.com/crossplane-contrib/crossview/compare/v4.6.0...v4.7.0-rc.1) (2026-09-21)
+
+
+### Bug Fixes
+
+* **chart:** correct shell variable syntax in database init container to fix indefinite PostgreSQL readiness retries ([e7234aa](https://github.com/crossplane-contrib/crossview/commit/e7234aaff9ffb55b2a06778df64e992119711ba0))
+* **chart:** pin PostgreSQL image to `postgres:18-alpine` instead of mutable `latest` tag
+* **docker:** pin base images (`golang:1.26-alpine`, `alpine:3.22`) for reproducible, scannable builds
+
+
+### Security
+
+* **deps:** resolve all 17 npm audit vulnerabilities (vite, rollup, react-router, yaml and transitive dependencies)
+* **deps:** bump `golang.org/x/crypto` to v0.56.0 and Go toolchain to go1.26.6 (govulncheck clean)
+* **ci:** align security-scan workflow with pinned `postgres:18-alpine` image
+
 # [4.6.0](https://github.com/crossplane-contrib/crossview/compare/v4.5.0...v4.6.0) (2026-09-04)
 
 

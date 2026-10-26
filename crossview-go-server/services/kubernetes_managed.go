@@ -3,6 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -12,6 +15,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 )
+
+type ManagedResourcesOptions struct {
+	Limit    int
+	Continue string
+	Kind     string
+	Search   string
+}
 
 type managedResourceTarget struct {
 	apiVersion string
@@ -119,8 +129,14 @@ func dedupeManagedResources(items []interface{}) []interface{} {
 func (k *KubernetesService) fetchManagedResourceTarget(contextName string, target managedResourceTarget) ([]interface{}, error) {
 	allItems := make([]interface{}, 0)
 	continueToken := ""
-	pageSize := int64(1000)
-	maxItems := int64(5000)
+	pageSize := k.managedPageSize
+	if pageSize <= 0 {
+		pageSize = lib.DefaultManagedPageSize
+	}
+	maxItems := k.managedMaxItemsPerType
+	if maxItems <= 0 {
+		maxItems = lib.DefaultManagedMaxItemsPerType
+	}
 	itemCount := int64(0)
 
 	for {
@@ -159,6 +175,10 @@ func (k *KubernetesService) fetchManagedResourceTarget(contextName string, targe
 }
 
 func (k *KubernetesService) GetManagedResources(contextName string, forceRefresh bool) (map[string]interface{}, error) {
+	return k.GetManagedResourcesPaged(contextName, forceRefresh, nil)
+}
+
+func (k *KubernetesService) GetManagedResourcesPaged(contextName string, forceRefresh bool, opts *ManagedResourcesOptions) (map[string]interface{}, error) {
 	if contextName != "" {
 		if err := k.SetContext(contextName); err != nil {
 			return nil, fmt.Errorf("failed to set context: %w", err)
@@ -173,20 +193,25 @@ func (k *KubernetesService) GetManagedResources(contextName string, forceRefresh
 		contextName = k.GetCurrentContext()
 	}
 
-	// Check cache if not forcing refresh
 	if !forceRefresh {
 		k.mu.RLock()
-		if cachedResult, exists := k.managedResourcesCache[contextName]; exists {
-			if cacheTime, timeExists := k.managedResourcesCacheTime[contextName]; timeExists {
-				if time.Since(cacheTime) < k.managedResourcesCacheTTL {
-					k.logger.Infof("Returning cached managed resources for context: %s", contextName)
-					cachedResult["fromCache"] = true
-					k.mu.RUnlock()
-					return cachedResult, nil
-				}
-			}
+		cachedResult, exists := k.managedResourcesCache[contextName]
+		cacheTime, timeExists := k.managedResourcesCacheTime[contextName]
+		ttl := k.managedResourcesCacheTTL
+		if ttl <= 0 {
+			ttl = time.Duration(lib.DefaultManagedCacheTTLSeconds) * time.Second
+		}
+		fresh := exists && timeExists && time.Since(cacheTime) < ttl
+		var cachedItems []interface{}
+		var haveItems bool
+		if fresh {
+			cachedItems, haveItems = cachedResult["items"].([]interface{})
 		}
 		k.mu.RUnlock()
+		if fresh && haveItems {
+			k.logger.Infof("Returning cached managed resources for context: %s", contextName)
+			return paginateManagedResourcesResult(cachedItems, true, opts), nil
+		}
 	}
 
 	k.logger.Infof("Fetching fresh managed resources for context: %s (forceRefresh: %t)", contextName, forceRefresh)
@@ -353,7 +378,11 @@ func (k *KubernetesService) GetManagedResources(contextName string, forceRefresh
 
 	resourceTargets := appendOptionalManagedResourceTargets(buildManagedResourceTargetsFromMRDs(mrdList))
 
-	semaphore := make(chan struct{}, 10)
+	maxConcurrency := k.managedMaxConcurrency
+	if maxConcurrency <= 0 {
+		maxConcurrency = lib.DefaultManagedMaxConcurrency
+	}
+	semaphore := make(chan struct{}, maxConcurrency)
 	resourceChan := make(chan resourceResult, len(resourceTargets))
 	var wg sync.WaitGroup
 
@@ -388,18 +417,130 @@ func (k *KubernetesService) GetManagedResources(contextName string, forceRefresh
 		}
 	}
 	allResources = dedupeManagedResources(allResources)
+	sortManagedResources(allResources)
 
-	result := map[string]interface{}{
+	result := paginateManagedResourcesResult(allResources, false, nil)
+
+	k.mu.Lock()
+	k.managedResourcesCache[contextName] = map[string]interface{}{
 		"items":     allResources,
 		"fromCache": false,
 	}
-
-	k.mu.Lock()
-	k.managedResourcesCache[contextName] = result
 	k.managedResourcesCacheTime[contextName] = time.Now()
 	k.mu.Unlock()
 
 	k.logger.Infof("Cached managed resources for context: %s (%d items)", contextName, len(allResources))
 
-	return result, nil
+	if opts == nil || (opts.Limit <= 0 && opts.Kind == "" && opts.Search == "") {
+		return result, nil
+	}
+	return paginateManagedResourcesResult(allResources, false, opts), nil
+}
+
+func sortManagedResources(items []interface{}) {
+	sort.SliceStable(items, func(i, j int) bool {
+		mi, _ := items[i].(map[string]interface{})
+		mj, _ := items[j].(map[string]interface{})
+		if mi == nil || mj == nil {
+			return false
+		}
+		ki, _ := mi["kind"].(string)
+		kj, _ := mj["kind"].(string)
+		if ki != kj {
+			return ki < kj
+		}
+		mdi, _ := mi["metadata"].(map[string]interface{})
+		mdj, _ := mj["metadata"].(map[string]interface{})
+		var nsi, nsj, ni, nj string
+		if mdi != nil {
+			nsi, _ = mdi["namespace"].(string)
+			ni, _ = mdi["name"].(string)
+		}
+		if mdj != nil {
+			nsj, _ = mdj["namespace"].(string)
+			nj, _ = mdj["name"].(string)
+		}
+		if nsi != nsj {
+			return nsi < nsj
+		}
+		return ni < nj
+	})
+}
+
+func filterManagedResources(items []interface{}, kind, search string) []interface{} {
+	if kind == "" && search == "" {
+		return items
+	}
+	lowerSearch := strings.ToLower(strings.TrimSpace(search))
+	filtered := make([]interface{}, 0, len(items))
+	for _, item := range items {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if kind != "" {
+			if k, _ := m["kind"].(string); k != kind {
+				continue
+			}
+		}
+		if lowerSearch != "" {
+			md, _ := m["metadata"].(map[string]interface{})
+			ns, name := "", ""
+			if md != nil {
+				ns, _ = md["namespace"].(string)
+				name, _ = md["name"].(string)
+			}
+			hay := strings.ToLower(ns + "/" + name)
+			if !strings.Contains(hay, lowerSearch) {
+				continue
+			}
+		}
+		filtered = append(filtered, item)
+	}
+	return filtered
+}
+
+func paginateManagedResourcesResult(allItems []interface{}, fromCache bool, opts *ManagedResourcesOptions) map[string]interface{} {
+	filtered := allItems
+	var limit int
+	var offset int
+	if opts != nil {
+		filtered = filterManagedResources(allItems, opts.Kind, opts.Search)
+		limit = opts.Limit
+		if opts.Continue != "" {
+			if v, err := strconv.Atoi(opts.Continue); err == nil && v > 0 {
+				offset = v
+			}
+		}
+	}
+	totalCount := len(filtered)
+	if limit <= 0 {
+		return map[string]interface{}{
+			"items":        filtered,
+			"fromCache":    fromCache,
+			"totalCount":   totalCount,
+			"continueToken": nil,
+		}
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	if offset > totalCount {
+		offset = totalCount
+	}
+	end := offset + limit
+	if end > totalCount {
+		end = totalCount
+	}
+	page := filtered[offset:end]
+	var nextToken interface{}
+	if end < totalCount {
+		nextToken = strconv.Itoa(end)
+	}
+	return map[string]interface{}{
+		"items":         page,
+		"fromCache":     fromCache,
+		"totalCount":    totalCount,
+		"continueToken": nextToken,
+	}
 }

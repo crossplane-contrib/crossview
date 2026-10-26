@@ -3,6 +3,11 @@ server:
   contextAliases:
     kind-kind: KIND
     dev-cluster: DEV
+  managed:
+    cacheTTLSeconds: 300
+    pageSize: 1000
+    maxItemsPerType: 5000
+    maxConcurrency: 10
   auth:
     mode: "none" # ⚠️ WARNING: No authentication - use only in trusted environments
   log:

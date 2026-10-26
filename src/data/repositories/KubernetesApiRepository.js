@@ -112,6 +112,18 @@ export class KubernetesApiRepository extends IKubernetesRepository {
     }
   }
 
+  async getGraph(context = null, { includeManaged = true } = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (context) params.set('context', context);
+      if (!includeManaged) params.set('includeManaged', 'false');
+      const query = params.toString();
+      return await this.request(`/graph${query ? `?${query}` : ''}`);
+    } catch (error) {
+      throw new Error(`Failed to get graph: ${error.message}`);
+    }
+  }
+
   async getResource(apiVersion, kind, name, namespace = null, context = null, plural = null) {
     try {
       const params = new URLSearchParams({ apiVersion, kind, name });
@@ -130,7 +142,7 @@ export class KubernetesApiRepository extends IKubernetesRepository {
     }
   }
 
-  async getManagedResources(context = null, forceRefresh = false) {
+  async getManagedResources(context = null, forceRefresh = false, options = {}) {
     try {
       const params = new URLSearchParams();
       if (context) {
@@ -139,12 +151,26 @@ export class KubernetesApiRepository extends IKubernetesRepository {
       if (forceRefresh) {
         params.append('refresh', 'true');
       }
+      if (options.limit) {
+        params.append('limit', options.limit.toString());
+      }
+      if (options.continueToken) {
+        params.append('continue', options.continueToken);
+      }
+      if (options.kind) {
+        params.append('kind', options.kind);
+      }
+      if (options.search) {
+        params.append('search', options.search);
+      }
       const queryString = params.toString();
       const endpoint = `/managed${queryString ? `?${queryString}` : ''}`;
       const result = await this.request(endpoint);
       return {
         items: result.items || [],
-        fromCache: result.fromCache || false
+        fromCache: result.fromCache || false,
+        totalCount: typeof result.totalCount === 'number' ? result.totalCount : (result.items || []).length,
+        continueToken: result.continueToken || null
       };
     } catch (error) {
       throw new Error(`Failed to get managed resources: ${error.message}`);
