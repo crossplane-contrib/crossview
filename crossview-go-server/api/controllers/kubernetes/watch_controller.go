@@ -314,7 +314,7 @@ func (c *WatchController) watchSingleResource(watcher *ResourceWatcher, req Watc
 					c.logger.Infof("Informer Add event for resource: %s", resourceKey)
 					c.sendMessage(watcher, WatchMessage{
 						Type:     "updated",
-						Resource: u.UnstructuredContent(),
+						Resource: services.SecretAsMetadata(u.UnstructuredContent(), req.APIVersion, req.Kind, req.Plural),
 					})
 				}
 			}
@@ -325,7 +325,7 @@ func (c *WatchController) watchSingleResource(watcher *ResourceWatcher, req Watc
 					c.logger.Infof("Informer Update event for resource: %s", resourceKey)
 					c.sendMessage(watcher, WatchMessage{
 						Type:     "updated",
-						Resource: u.UnstructuredContent(),
+						Resource: services.SecretAsMetadata(u.UnstructuredContent(), req.APIVersion, req.Kind, req.Plural),
 					})
 				}
 			}
@@ -444,7 +444,7 @@ func (c *WatchController) updateResource(watcher *ResourceWatcher, req WatchRequ
 
 	c.sendMessage(watcher, WatchMessage{
 		Type:     "updated",
-		Resource: resource.UnstructuredContent(),
+		Resource: services.SecretAsMetadata(resource.UnstructuredContent(), req.APIVersion, req.Kind, req.Plural),
 	})
 }
 

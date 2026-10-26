@@ -132,7 +132,7 @@ func (c *KubernetesController) GetResources(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, result)
+	ctx.JSON(http.StatusOK, services.SecretListAsMetadata(result, apiVersion, kind, plural))
 }
 
 func parseInt64(s string) (int64, error) {
@@ -176,7 +176,7 @@ func (c *KubernetesController) GetResource(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, resource)
+	ctx.JSON(http.StatusOK, services.SecretAsMetadata(resource, apiVersion, kind, plural))
 }
 
 func (c *KubernetesController) GetEvents(ctx *gin.Context) {
@@ -208,7 +208,25 @@ func (c *KubernetesController) GetManagedResources(ctx *gin.Context) {
 	contextName := ctx.Query("context")
 	forceRefresh := ctx.Query("refresh") == "true"
 
-	result, err := c.kubernetesService.GetManagedResources(contextName, forceRefresh)
+	var opts *services.ManagedResourcesOptions
+	if limitStr, kind, search, cont := ctx.Query("limit"), ctx.Query("kind"), ctx.Query("search"), ctx.Query("continue"); limitStr != "" || kind != "" || search != "" || cont != "" {
+		o := &services.ManagedResourcesOptions{
+			Kind:     kind,
+			Search:   search,
+			Continue: cont,
+		}
+		if limitStr != "" {
+			if v, err := parseInt64(limitStr); err == nil && v > 0 {
+				if v > 2000 {
+					v = 2000
+				}
+				o.Limit = int(v)
+			}
+		}
+		opts = o
+	}
+
+	result, err := c.kubernetesService.GetManagedResourcesPaged(contextName, forceRefresh, opts)
 	if err != nil {
 		c.logger.Errorf("Failed to get managed resources: %s", err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -216,6 +234,29 @@ func (c *KubernetesController) GetManagedResources(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, result)
+}
+
+// GetGraph returns the dependency graph of Crossplane resources for the requested context.
+// Passing includeManaged=false skips the managed resource list, the slowest part.
+func (c *KubernetesController) GetGraph(ctx *gin.Context) {
+	contextName := ctx.Query("context")
+	if contextName == "" {
+		contextName = c.kubernetesService.GetCurrentContext()
+		if contextName == "" {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "context parameter is required"})
+			return
+		}
+	}
+
+	opts := services.GraphOptions{SkipManaged: ctx.Query("includeManaged") == "false"}
+	graph, err := services.GetGraph(c.kubernetesService, contextName, opts)
+	if err != nil {
+		c.logger.Errorf("Failed to build graph: %s", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to build graph"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, graph)
 }
 
 func (c *KubernetesController) AddKubeConfig(ctx *gin.Context) {

@@ -1,0 +1,170 @@
+apiVersion: kubernetes.crossplane.io/v1alpha2
+kind: Object
+metadata:
+  name: identity-deploy
+  namespace: identity
+spec:
+  forProvider:
+    manifest:
+      kind: Deployment
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: kubernetes.crossplane.io/v1alpha2
+kind: Object
+metadata:
+  name: admins-group
+  namespace: identity
+spec:
+  forProvider:
+    manifest:
+      kind: ConfigMap
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: kubernetes.crossplane.io/v1alpha2
+kind: Object
+metadata:
+  name: user-1-user
+  namespace: identity
+spec:
+  forProvider:
+    manifest:
+      kind: ConfigMap
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: kubernetes.crossplane.io/v1alpha2
+kind: Object
+metadata:
+  name: web-a-client
+  namespace: identity
+spec:
+  forProvider:
+    manifest:
+      kind: Service
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: kubernetes.crossplane.io/v1alpha2
+kind: Object
+metadata:
+  name: dashboard-client
+  namespace: identity
+spec:
+  forProvider:
+    manifest:
+      kind: Service
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: kubernetes.crossplane.io/v1alpha2
+kind: Object
+metadata:
+  name: web-b-client
+  namespace: identity
+spec:
+  forProvider:
+    manifest:
+      kind: Service
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: kubernetes.crossplane.io/v1alpha2
+kind: Object
+metadata:
+  name: web-a-proxy
+  namespace: media
+spec:
+  forProvider:
+    manifest:
+      kind: Deployment
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: kubernetes.crossplane.io/v1alpha2
+kind: Object
+metadata:
+  name: web-b-proxy
+  namespace: encoding
+spec:
+  forProvider:
+    manifest:
+      kind: Deployment
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: kubernetes.crossplane.io/v1alpha2
+kind: Object
+metadata:
+  name: budgetapp-deploy
+  namespace: media
+spec:
+  forProvider:
+    manifest:
+      kind: Deployment
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"
+---
+apiVersion: kubernetes.crossplane.io/v1alpha2
+kind: Object
+metadata:
+  name: budgetapp-client
+  namespace: identity
+spec:
+  forProvider:
+    manifest:
+      kind: Service
+status:
+  conditions:
+    - type: Ready
+      status: "False"
+    - type: Synced
+      status: "True"
+---
+apiVersion: s3.example.org/v1beta1
+kind: Bucket
+metadata:
+  name: orders-db-bucket
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"

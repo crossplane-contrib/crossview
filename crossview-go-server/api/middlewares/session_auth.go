@@ -33,7 +33,8 @@ func (m SessionAuthMiddleware) Handler() gin.HandlerFunc {
 		session := sessions.Default(c)
 		userID := session.Get("userId")
 
-		if userID == nil {
+		id, validID := userID.(uint)
+		if !validID || id == 0 || (!m.env.DBEnabled && SSOIdentity(session) == nil) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			c.Abort()
 			return
@@ -46,6 +47,17 @@ func (m SessionAuthMiddleware) Handler() gin.HandlerFunc {
 
 func RequireAdmin(userRepo *models.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if userRepo.DB() == nil {
+			user := SSOIdentity(sessions.Default(c))
+			if user == nil || user.Role != "admin" {
+				c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+				c.Abort()
+				return
+			}
+			c.Set("userId", user.ID)
+			c.Next()
+			return
+		}
 		var userID uint
 		if id, exists := c.Get("userId"); exists && id != nil {
 			switch v := id.(type) {

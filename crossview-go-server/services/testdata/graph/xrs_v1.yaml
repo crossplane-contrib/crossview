@@ -1,0 +1,20 @@
+apiVersion: platform.example.org/v1alpha1
+kind: LegacyDatabase
+metadata:
+  name: orders-db
+spec:
+  compositionRef:
+    name: legacydatabase
+  resourceRefs:
+    - apiVersion: s3.example.org/v1beta1
+      kind: Bucket
+      name: orders-db-bucket
+    - apiVersion: s3.example.org/v1beta1
+      kind: Bucket
+      name: orders-db-missing
+status:
+  conditions:
+    - type: Ready
+      status: "True"
+    - type: Synced
+      status: "True"

@@ -1,0 +1,151 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: identityproviders.platform.example.org
+spec:
+  group: platform.example.org
+  scope: Namespaced
+  names:
+    kind: IdentityProvider
+    plural: identityproviders
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+status:
+  conditions:
+    - type: Established
+      status: "True"
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: identitygroups.platform.example.org
+spec:
+  group: platform.example.org
+  scope: Namespaced
+  names:
+    kind: IdentityGroup
+    plural: identitygroups
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+status:
+  conditions:
+    - type: Established
+      status: "True"
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: identityusers.platform.example.org
+spec:
+  group: platform.example.org
+  scope: Namespaced
+  names:
+    kind: IdentityUser
+    plural: identityusers
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+status:
+  conditions:
+    - type: Established
+      status: "True"
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: identityclients.platform.example.org
+spec:
+  group: platform.example.org
+  scope: Namespaced
+  names:
+    kind: IdentityClient
+    plural: identityclients
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+status:
+  conditions:
+    - type: Established
+      status: "True"
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: authproxies.platform.example.org
+spec:
+  group: platform.example.org
+  scope: Namespaced
+  names:
+    kind: AuthProxy
+    plural: authproxies
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+status:
+  conditions:
+    - type: Established
+      status: "True"
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: dashboards.platform.example.org
+spec:
+  group: platform.example.org
+  scope: Namespaced
+  names:
+    kind: Dashboard
+    plural: dashboards
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+status:
+  conditions:
+    - type: Established
+      status: "True"
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: budgetapps.platform.example.org
+spec:
+  group: platform.example.org
+  scope: Namespaced
+  names:
+    kind: BudgetApp
+    plural: budgetapps
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+status:
+  conditions:
+    - type: Established
+      status: "True"
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: legacydatabases.platform.example.org
+spec:
+  group: platform.example.org
+  scope: Cluster
+  names:
+    kind: LegacyDatabase
+    plural: legacydatabases
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+status:
+  conditions:
+    - type: Established
+      status: "True"

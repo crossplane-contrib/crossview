@@ -29,8 +29,10 @@ export const Resources = () => {
   const [allManagedResources, setAllManagedResources] = useState([]);
   const [fromCache, setFromCache] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loadProgress, setLoadProgress] = useState(null);
   const tableContainerRef = useRef(null);
   const isMountedRef = useRef(true);
+  const loadIdRef = useRef(0);
 
   useEffect(() => {
     setSelectedResource(null);
@@ -42,9 +44,10 @@ export const Resources = () => {
       setUniqueKinds([]);
       setAllManagedResources([]);
       setFromCache(false);
+      setLoadProgress(null);
       return;
     }
-    
+
       try {
       if (forceRefresh) {
         setIsRefreshing(true);
@@ -52,19 +55,39 @@ export const Resources = () => {
         setLoading(true);
       }
         setError(null);
+        setLoadProgress({ loaded: 0, total: null });
+        const loadId = (loadIdRef.current || 0) + 1;
+        loadIdRef.current = loadId;
         const contextName = typeof selectedContext === 'string' ? selectedContext : selectedContext.name || selectedContext;
         const { GetManagedResourcesUseCase } = await import('../../domain/usecases/GetManagedResourcesUseCase.js');
         const useCase = new GetManagedResourcesUseCase(kubernetesRepository);
-      const result = await useCase.execute(contextName, null, forceRefresh);
-      
-      if (!isMountedRef.current) return;
-      
-      const resources = result.items || [];
-        setAllManagedResources(Array.isArray(resources) ? resources : []);
-      setUniqueKinds([...new Set(resources.map(r => r.kind).filter(Boolean))].sort((a, b) => a.localeCompare(b)));
-      setFromCache(result.fromCache || false);
+      const accumulated = [];
+      let continueToken = null;
+      let totalCount = null;
+      let seenFromCache = false;
+      let firstPage = true;
+      do {
+        if (!isMountedRef.current || loadIdRef.current !== loadId) return;
+        const result = await useCase.execute(contextName, null, firstPage && forceRefresh, { limit: 500, continueToken });
+        if (!isMountedRef.current || loadIdRef.current !== loadId) return;
+        const pageItems = Array.isArray(result.items) ? result.items : [];
+        accumulated.push(...pageItems);
+        if (typeof result.totalCount === 'number') totalCount = result.totalCount;
+        if (result.fromCache) seenFromCache = true;
+        continueToken = result.continueToken || null;
+        firstPage = false;
+        setLoadProgress({ loaded: accumulated.length, total: totalCount });
+        setAllManagedResources([...accumulated]);
+      } while (continueToken);
+
+      if (!isMountedRef.current || loadIdRef.current !== loadId) return;
+
+      setAllManagedResources(accumulated);
+      setUniqueKinds([...new Set(accumulated.map(r => r.kind).filter(Boolean))].sort((a, b) => a.localeCompare(b)));
+      setFromCache(seenFromCache);
         setLoading(false);
       setIsRefreshing(false);
+      setLoadProgress(null);
       } catch (err) {
       if (!isMountedRef.current) return;
         console.warn('Failed to load managed resources:', err);
@@ -74,6 +97,7 @@ export const Resources = () => {
       setFromCache(false);
         setLoading(false);
       setIsRefreshing(false);
+      setLoadProgress(null);
       }
   }, [selectedContext, kubernetesRepository]);
 
@@ -388,6 +412,7 @@ export const Resources = () => {
             />
             <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
               {isRefreshing ? 'Refreshing managed resources...' : 'Loading managed resources...'}
+              {loadProgress && (loadProgress.total ? ` ${loadProgress.loaded}/${loadProgress.total}` : ` ${loadProgress.loaded}`)}
             </Text>
           </HStack>
         </Box>

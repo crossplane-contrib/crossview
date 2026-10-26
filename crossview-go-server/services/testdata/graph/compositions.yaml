@@ -1,0 +1,146 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: identityprovider
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.org/v1alpha1
+    kind: IdentityProvider
+  mode: Pipeline
+  pipeline:
+    - step: step-0
+      functionRef:
+        name: function-go-templating
+    - step: step-1
+      functionRef:
+        name: function-auto-ready
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: identitygroup
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.org/v1alpha1
+    kind: IdentityGroup
+  mode: Pipeline
+  pipeline:
+    - step: step-0
+      functionRef:
+        name: function-go-templating
+    - step: step-1
+      functionRef:
+        name: function-auto-ready
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: identityuser
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.org/v1alpha1
+    kind: IdentityUser
+  mode: Pipeline
+  pipeline:
+    - step: step-0
+      functionRef:
+        name: function-go-templating
+    - step: step-1
+      functionRef:
+        name: function-auto-ready
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: identityclient
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.org/v1alpha1
+    kind: IdentityClient
+  mode: Pipeline
+  pipeline:
+    - step: step-0
+      functionRef:
+        name: function-go-templating
+    - step: step-1
+      functionRef:
+        name: function-auto-ready
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: authproxy
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.org/v1alpha1
+    kind: AuthProxy
+  mode: Pipeline
+  pipeline:
+    - step: step-0
+      functionRef:
+        name: function-go-templating
+    - step: step-1
+      functionRef:
+        name: function-auto-ready
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: dashboard
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.org/v1alpha1
+    kind: Dashboard
+  mode: Pipeline
+  pipeline:
+    - step: step-0
+      functionRef:
+        name: function-go-templating
+    - step: step-1
+      functionRef:
+        name: function-auto-ready
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: budgetapp
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.org/v1alpha1
+    kind: BudgetApp
+  mode: Pipeline
+  pipeline:
+    - step: step-0
+      functionRef:
+        name: function-go-templating
+    - step: step-1
+      functionRef:
+        name: function-auto-ready
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: authproxy-experimental
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.org/v1alpha1
+    kind: AuthProxy
+  mode: Pipeline
+  pipeline:
+    - step: step-0
+      functionRef:
+        name: function-go-templating
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: legacydatabase
+spec:
+  compositeTypeRef:
+    apiVersion: platform.example.org/v1alpha1
+    kind: LegacyDatabase
+  resources:
+    - name: bucket
+      base:
+        apiVersion: s3.example.org/v1beta1
+        kind: Bucket

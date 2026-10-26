@@ -7,13 +7,16 @@
 <br><br>
 
   <a href="https://join.slack.com/t/crossviewtalk/shared_invite/zt-3px5umxyo-G_tgt_3Eyt84nE1c1ykNTw">
-    <img src="https://img.shields.io/badge/Join%20Crossview%20on%20Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white" alt="Join on Slack"/>
+    <img src="public/images/slack-badge.svg" width="250" height="40" alt="Join Crossview on Slack"/>
+  </a>
+  <a href="https://coidea.co/ideas/7cd0876d-92cf-48e7-9db4-d9462ee1e74b/crossview-headlamp-plugin">
+    <img src="public/images/coidea-badge.svg" width="250" height="40" alt="Join Crossview on Coidea"/>
   </a>
   
 [![GitHub stars](https://img.shields.io/github/stars/crossplane-contrib/crossview?style=social)](https://github.com/crossplane-contrib/crossview)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
   [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/crossview)](https://artifacthub.io/packages/search?repo=crossview)
-  [![View on KikPlate](https://img.shields.io/static/v1?label=KikPlate&message=fullstack-composed-template&color=0366d6&style=flat-square)](https://kikplate.dev/plates/fullstack-composed-template)
+  [![View on KikPlate](https://img.shields.io/static/v1?label=KikPlate&message=fullstack-composed-template&color=0366d6&style=flat-square)](https://github.com/kikplate/kikplate)
 
   Bootstrapped with the KikPlate fullstack composed template.
 
@@ -49,6 +52,7 @@
 - [Documentation](#documentation)
 - [Tech Stack](#tech-stack)
 - [Contributing](#contributing)
+- [Community](#community)
 - [License](#license)
 
 ## Features
@@ -68,7 +72,7 @@
 
 - Node.js 20+ (for frontend development)
 - Go 1.24+ (for backend server)
-- PostgreSQL database — only required when using `auth_mode: session` (the default). For local development without a database, set `auth_mode: none` in `config/config.yaml` (see `config/examples/config-none.yaml.example`).
+- PostgreSQL database — required for local username/password login. Session-based OIDC SSO also supports `database.enabled: false` (see [SSO Setup](docs/SSO_SETUP.md)). For local development without authentication, set `server.auth.mode: none` in `config/config.yaml` (see `config/examples/config-none.yaml.example`).
 - Kubernetes config file at `~/.kube/config` (or set `KUBECONFIG` env var)
 
 ### Install Dependencies
@@ -345,6 +349,17 @@ The application loads configuration in this order (highest to lowest priority):
 ## Contributing
 
 Contributions are welcome. Please read the [Contributing Guide](docs/CONTRIBUTING.md) for development setup, PR guidelines, and how to report issues. By participating, you agree to our [Code of Conduct](docs/CODE_OF_CONDUCT.md). To see where the project is headed, check the [Roadmap](docs/ROADMAP.md).
+
+## Community
+
+Join the [Crossview topic on Coidea](https://coidea.co/ideas/7cd0876d-92cf-48e7-9db4-d9462ee1e74b/crossview-headlamp-plugin) to follow the latest Crossview posts and updates, explore new ideas, and connect with the community.
+
+Anyone can publicly browse ideas shared in the topic. Request to join if you
+would like to publish your own Crossview ideas, find collaborators, or start
+discussions around those ideas.
+
+For code contributions, bug reports, and pull requests, continue to use the
+[Contributing Guide](docs/CONTRIBUTING.md) and GitHub.
 
 ## License
 

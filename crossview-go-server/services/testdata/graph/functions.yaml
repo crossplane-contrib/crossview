@@ -1,0 +1,17 @@
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-go-templating
+status:
+  conditions:
+    - type: Healthy
+      status: "True"
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-auto-ready
+status:
+  conditions:
+    - type: Healthy
+      status: "True"

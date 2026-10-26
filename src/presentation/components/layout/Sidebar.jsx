@@ -5,7 +5,7 @@ import {
   Text,
   Image,
 } from '@chakra-ui/react';
-import { FiChevronLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiLayout, FiSettings, FiPackage, FiFileText, FiLayers, FiBox, FiBook, FiServer, FiUsers, FiSliders, FiGrid, FiDatabase, FiCode, FiGithub, FiShield } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiChevronDown, FiChevronUp, FiLayout, FiSettings, FiPackage, FiFileText, FiLayers, FiBox, FiBook, FiServer, FiUsers, FiSliders, FiGrid, FiDatabase, FiCode, FiGithub, FiShield, FiShare2 } from 'react-icons/fi';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -147,6 +147,7 @@ export const Sidebar = ({ onToggle, onResize }) => {
 
   const menuItems = useMemo(() => ([
     { id: 'dashboard', label: 'Dashboard', icon: FiLayout, path: '/' },
+    { id: 'graph', label: 'Graph', icon: FiShare2, path: '/graph', tooltip: 'How XRDs, Compositions, Composite Resources and Functions relate' },
     // Core Crossplane Resources (building blocks)
     { id: 'providers', label: 'Providers', icon: FiPackage, path: '/providers', tooltip: 'Crossplane providers that extend Kubernetes capabilities' },
     { id: 'functions', label: 'Functions', icon: FiCode, path: '/functions', tooltip: 'Crossplane Functions - composable building blocks for Compositions' },

@@ -36,6 +36,24 @@ tests:
               configMapKeyRef:
                 name: RELEASE-NAME-crossview-config
                 key: SAML_ENABLED
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OIDC_PROVIDER_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: RELEASE-NAME-crossview-config
+                key: OIDC_PROVIDER_NAME
+                optional: true
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OIDC_PROVIDER_ICON
+            valueFrom:
+              configMapKeyRef:
+                name: RELEASE-NAME-crossview-config
+                key: OIDC_PROVIDER_ICON
+                optional: true
 
   - it: should use existing ConfigMap when config.ref is set
     set:
@@ -53,6 +71,24 @@ tests:
               configMapKeyRef:
                 name: existing-configmap
                 key: DB_HOST
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OIDC_PROVIDER_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: existing-configmap
+                key: OIDC_PROVIDER_NAME
+                optional: true
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OIDC_PROVIDER_ICON
+            valueFrom:
+              configMapKeyRef:
+                name: existing-configmap
+                key: OIDC_PROVIDER_ICON
+                optional: true
 
   - it: should inject secrets from chart-created secret (plain strings)
     set:

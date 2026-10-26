@@ -50,6 +50,7 @@ func (r KubernetesRoutes) Setup() {
 		api.GET("/resource", r.authMiddleware.Handler(), r.controller.GetResource)
 		api.GET("/events", r.authMiddleware.Handler(), r.controller.GetEvents)
 		api.GET("/managed", r.authMiddleware.Handler(), r.controller.GetManagedResources)
+		api.GET("/graph", r.authMiddleware.Handler(), r.controller.GetGraph)
 		api.GET("/watch", r.authMiddleware.Handler(), r.watchController.WatchResources)
 	}
 }

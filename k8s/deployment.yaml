@@ -69,6 +69,26 @@ spec:
             secretKeyRef:
               name: crossview-secrets
               key: session-secret
+        - name: MANAGED_CACHE_TTL_SECONDS
+          valueFrom:
+            configMapKeyRef:
+              name: crossview-config
+              key: MANAGED_CACHE_TTL_SECONDS
+        - name: MANAGED_PAGE_SIZE
+          valueFrom:
+            configMapKeyRef:
+              name: crossview-config
+              key: MANAGED_PAGE_SIZE
+        - name: MANAGED_MAX_ITEMS_PER_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: crossview-config
+              key: MANAGED_MAX_ITEMS_PER_TYPE
+        - name: MANAGED_MAX_CONCURRENCY
+          valueFrom:
+            configMapKeyRef:
+              name: crossview-config
+              key: MANAGED_MAX_CONCURRENCY
         livenessProbe:
           httpGet:
             path: /api/health
