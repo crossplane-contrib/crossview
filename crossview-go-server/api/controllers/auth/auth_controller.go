@@ -29,24 +29,27 @@ func NewAuthController(logger lib.Logger, db lib.Database, env lib.Env) AuthCont
 func (c *AuthController) Check(ctx *gin.Context) {
 	hasAdmin, _ := c.userRepo.HasAdmin()
 	hasUsers, _ := c.userRepo.Count()
+	dbEnabled := c.userRepo.DB() != nil
 	unauthenticated := gin.H{
-		"authenticated": false,
-		"hasAdmin":      hasAdmin,
-		"hasUsers":      hasUsers > 0,
-		"authMode":      c.env.AuthMode,
+		"authenticated":   false,
+		"hasAdmin":        hasAdmin,
+		"hasUsers":        hasUsers > 0,
+		"authMode":        c.env.AuthMode,
+		"databaseEnabled": dbEnabled,
 	}
 	userResponse := func(user *models.User) gin.H {
 		return gin.H{
-			"authenticated": true,
+			"authenticated":   true,
 			"user": gin.H{
 				"id":       user.ID,
 				"username": user.Username,
 				"email":    user.Email,
 				"role":     user.Role,
 			},
-			"hasAdmin": hasAdmin,
-			"hasUsers": hasUsers > 0,
-			"authMode": c.env.AuthMode,
+			"hasAdmin":        hasAdmin,
+			"hasUsers":        hasUsers > 0,
+			"authMode":        c.env.AuthMode,
+			"databaseEnabled": dbEnabled,
 		}
 	}
 

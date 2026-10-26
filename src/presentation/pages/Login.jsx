@@ -45,6 +45,7 @@ export const Login = () => {
   const providerIcon = ssoStatus?.oidc?.providerIcon || (() => {
     try { return `${new URL(ssoIssuer).origin}/favicon.ico`; } catch { return ''; }
   })();
+  const databaseEnabled = authState?.databaseEnabled ?? true;
 
   useEffect(() => {
     if (user) {
@@ -233,7 +234,8 @@ export const Login = () => {
                 </Box>
               )}
 
-              <Box as="form" onSubmit={handleSubmit} w="100%">
+              {databaseEnabled && (
+                <Box as="form" onSubmit={handleSubmit} w="100%">
                 {(
 
                     <VStack spacing={4} align="stretch">
@@ -292,7 +294,8 @@ export const Login = () => {
                       isRegisterMode ? 'Create Account' : 'Sign In'
                     )}
                   </Button>
-              </Box>
+                </Box>
+              )}
 
               {/* SSO Login Options */}
               {(ssoStatus.oidc.enabled || ssoStatus.saml.enabled) && (
