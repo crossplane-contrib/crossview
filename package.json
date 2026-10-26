@@ -1,6 +1,6 @@
 {
   "name": "crossview",
-  "version": "4.7.0-rc.4",
+  "version": "4.7.0",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {

@@ -1,3 +1,38 @@
+# [4.7.0](https://github.com/crossplane-contrib/crossview/compare/v4.6.0...v4.7.0) (2026-10-26)
+
+Stable release consolidating the 4.7.0 release candidates and subsequent fixes.
+
+### Features
+
+* **graph:** add a Crossplane dependency graph with live filtering, health filters, rendering limits, and shareable URL state ([#315](https://github.com/crossplane-contrib/crossview/pull/315))
+* **auth:** support database-free OIDC SSO sessions; retain local username/password login when the database is enabled and hide password controls in SSO-only mode ([#322](https://github.com/crossplane-contrib/crossview/pull/322))
+* **sso:** add configurable provider names and icons to the login page, configuration examples, and Helm chart ([#322](https://github.com/crossplane-contrib/crossview/pull/322))
+
+### Bug Fixes
+
+* **dashboard:** count all composite resources in namespace and health widgets instead of a truncated sample
+* **graph:** correct health classification and align graph presentation with resource relations
+* **api:** bound parallel graph resource listing, validate context parameters, and sanitize graph errors
+* **chart:** fix PostgreSQL readiness retries and pin the bundled PostgreSQL image
+* **auth:** preserve SSO identity through database-free session checks and reject password login and registration without a database
+
+### Performance Improvements
+
+* **managed:** add server-side paging and configurable cache TTL, page size, item caps, and concurrency ([#308](https://github.com/crossplane-contrib/crossview/pull/308))
+* **graph:** add scale benchmarks, parallel input fetching, and on-demand health loading
+
+### Security
+
+* **secrets:** return metadata only for Secret details, list responses, and watch events; omit Secret values and key names ([#316](https://github.com/crossplane-contrib/crossview/pull/316), [#318](https://github.com/crossplane-contrib/crossview/pull/318))
+* **deps:** include the npm and Go dependency security updates introduced in the 4.7.0 release candidates
+* **docker:** pin build and runtime base images for reproducible builds
+
+### Documentation
+
+* **community:** introduce the [Crossview topic on Coidea](https://coidea.co/ideas/7cd0876d-92cf-48e7-9db4-d9462ee1e74b/crossview-headlamp-plugin) for updates, public ideas, collaboration, and discussions
+* **sso:** document database-free authentication, provider branding, Helm configuration, and signed-cookie sessions
+* **readme:** refresh the dashboard screenshot
+
 # [4.7.0-rc.4](https://github.com/crossplane-contrib/crossview/compare/v4.7.0-rc.3...v4.7.0-rc.4) (2026-10-22)
 
 
