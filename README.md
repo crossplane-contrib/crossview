@@ -20,7 +20,9 @@
   Support this project: [Buy Me a Coffee](https://buymeacoffee.com/moeidheidari)
 </div>
 
-![Crossview Dashboard](public/images/new-screeenshot.png)
+<p align="center">
+  <img src="public/images/new-screeenshot.png" alt="Crossview Dashboard"/>
+</p>
 
 ### Demo Video
 
