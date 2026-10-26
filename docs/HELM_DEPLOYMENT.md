@@ -87,6 +87,37 @@ helm install crossview crossview/crossview \
   --set secrets.sessionSecret=$(openssl rand -base64 32)
 ```
 
+### With OIDC SSO only (no database)
+
+Disable both the bundled database and application database access:
+
+```yaml
+database:
+  enabled: false
+config:
+  database:
+    enabled: false
+  server:
+    auth:
+      mode: session
+    cors:
+      origin: https://crossview.example.com
+  sso:
+    oidc:
+      enabled: true
+      issuer: https://idp.example.com/realms/company
+      clientId: crossview-client
+      providerName: "Company SSO"
+      providerIcon: "https://idp.example.com/sso-icon.svg"
+```
+
+Configure `secrets.sessionSecret` and `secrets.OIDCClientSecret` using existing
+Secrets or your secret-management workflow. Password sign-in is hidden and
+disabled in this mode. To allow local password login alongside SSO, enable
+`config.database.enabled` and configure a bundled or external database.
+`database.enabled` controls only deployment of bundled PostgreSQL.
+See the [chart README](../helm/crossview/README.md) for a complete Secret example.
+
 ### With header auth (no database)
 
 When Crossview is behind an authenticating proxy (OAuth2 Proxy, Ingress with auth) that sets the user in a header, use header auth and disable the database:
@@ -304,4 +335,3 @@ For more help, see [Troubleshooting Guide](TROUBLESHOOTING.md).
 ## Advanced Configuration
 
 See the [Helm Chart README](../helm/crossview/README.md) for complete configuration options.
-

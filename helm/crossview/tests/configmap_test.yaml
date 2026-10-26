@@ -105,6 +105,12 @@ tests:
           path: data.OIDC_ENABLED
           value: "false"
       - equal:
+          path: data.OIDC_PROVIDER_NAME
+          value: ""
+      - equal:
+          path: data.OIDC_PROVIDER_ICON
+          value: ""
+      - equal:
           path: data.SAML_ENABLED
           value: "false"
 
@@ -127,6 +133,8 @@ tests:
             enabled: true
             issuer: https://auth.example.com
             clientId: my-client
+            providerName: "Company SSO"
+            providerIcon: "https://example.com/icon.svg"
       secrets:
         dbPassword: test-password
         sessionSecret: test-secret
@@ -158,6 +166,30 @@ tests:
       - equal:
           path: data.OIDC_CLIENT_ID
           value: "my-client"
+      - equal:
+          path: data.OIDC_PROVIDER_NAME
+          value: "Company SSO"
+      - equal:
+          path: data.OIDC_PROVIDER_ICON
+          value: "https://example.com/icon.svg"
+
+  - it: should support session SSO without an application database
+    set:
+      database.enabled: false
+      config.database.enabled: false
+      config.server.auth.mode: session
+      config.sso.oidc.enabled: true
+      secrets.sessionSecret: test-secret
+    asserts:
+      - equal:
+          path: data.DB_ENABLED
+          value: "false"
+      - equal:
+          path: data.AUTH_MODE
+          value: "session"
+      - equal:
+          path: data.OIDC_ENABLED
+          value: "true"
 
   - it: should render context aliases into env JSON
     set:
@@ -241,4 +273,3 @@ tests:
       - equal:
           path: data.OIDC_USERINFO_URL
           value: "http://idp.idp.svc.cluster.local:5556/userinfo"
-

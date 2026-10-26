@@ -90,6 +90,9 @@ The following table lists the configurable parameters and their default values:
 | `image.tag`                      | Image tag (leave empty for Chart.AppVersion)                                | `""` (uses chart version)                  |
 | `app.replicas`                   | Number of replicas                                                          | `1`                                        |
 | `database.enabled`               | Enable bundled PostgreSQL                                                   | `true`                                     |
+| `config.database.enabled`        | Enable application database access; independent of bundled PostgreSQL       | `true`                                     |
+| `config.sso.oidc.providerName`    | Optional OIDC login-button name; inferred from issuer when empty            | `""`                                       |
+| `config.sso.oidc.providerIcon`    | Optional browser-accessible icon URL; issuer favicon when empty             | `""`                                       |
 | `config.ref`                     | Reference existing ConfigMap (skips chart-generated config)                 | `""`                                       |
 | `config.server.contextAliases`   | Map of kube context names to short UI labels                                | `{}`                                        |
 | `config.server.managed.cacheTTLSeconds` | Managed resources cache TTL per context (seconds)                 | `300`                                       |
@@ -107,6 +110,49 @@ The following table lists the configurable parameters and their default values:
 | `resources.requests.cpu`         | CPU request                                                                 | `250m`                                     |
 | `resources.limits.memory`        | Memory limit                                                                | `1Gi`                                      |
 | `resources.limits.cpu`           | CPU limit                                                                   | `1000m`                                    |
+
+### OIDC SSO without PostgreSQL
+
+```yaml
+database:
+  enabled: false # Do not deploy bundled PostgreSQL
+config:
+  database:
+    enabled: false # Disable application database access
+  server:
+    auth:
+      mode: session
+    cors:
+      origin: https://crossview.example.com
+  sso:
+    oidc:
+      enabled: true
+      issuer: https://idp.example.com/realms/company
+      clientId: crossview-client
+      providerName: "Company SSO"
+      providerIcon: "https://idp.example.com/sso-icon.svg"
+secrets:
+  sessionSecret:
+    secretKeyRef:
+      name: crossview-auth
+      key: session-secret
+  OIDCClientSecret:
+    secretKeyRef:
+      name: crossview-auth
+      key: oidc-client-secret
+```
+
+Create the referenced Secret first using your secret-management workflow.
+Keep the session secret stable across restarts and replicas.
+SSO-only users have the `user` role; password inputs, the password Sign In
+button, and the "Or continue with" divider are hidden. For both local password
+login and SSO, keep `config.database.enabled: true` and configure PostgreSQL.
+Set `database.enabled: false` alone when using an external PostgreSQL server.
+
+Branding is emitted as `OIDC_PROVIDER_NAME` and `OIDC_PROVIDER_ICON` in the
+ConfigMap and consumed by the Deployment. With `config.ref`, add these keys to
+your external ConfigMap to customize branding; missing keys are optional and
+retain the UI defaults. See [SSO setup](../../docs/SSO_SETUP.md) for details.
 
 ## Secret handling modes
 
@@ -263,7 +309,7 @@ Enable only one of `ingress` or `gatewayAPI` at a time.
 
 ## Important Notes
 
-- When `config.server.auth.mode` = `session` → `secrets.dbPassword` and `secrets.sessionSecret` are required
+- When `config.server.auth.mode` = `session`, provide `secrets.sessionSecret`; provide `secrets.dbPassword` when application database access is enabled. SSO-only sessions can disable both database settings.
 - When `config.server.auth.mode` = `header` or `none` → database can be disabled (`database.enabled: false`), no DB/session secret needed
 - Secrets are injected as environment variables (`DB_PASS`, `SESSION_SECRET`, `OIDC_CLIENT_SECRET`, etc.)
 - For production, prefer `secretKeyRef` to avoid storing sensitive values in Helm values

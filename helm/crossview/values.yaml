@@ -214,6 +214,8 @@ config:
   #     userInfoURL: ""
   #     callbackURL: http://localhost:3001/api/auth/oidc/callback
   #     scope: openid profile email
+  #     providerName: "Company SSO"
+  #     providerIcon: "https://example.com/sso-icon.svg"
   #     usernameAttribute: preferred_username
   #     emailAttribute: email
   #     firstNameAttribute: given_name
@@ -230,6 +232,9 @@ config:
   sso:
     oidc:
       enabled: false
+      # Optional login-button branding; empty values use issuer-based defaults.
+      providerName: ""
+      providerIcon: ""
     saml:
       enabled: false
 

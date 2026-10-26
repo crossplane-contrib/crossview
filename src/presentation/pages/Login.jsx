@@ -14,13 +14,39 @@ import { colors, getBorderColor, getBackgroundColor, getTextColor } from '../uti
 export const Login = () => {
   const navigate = useNavigate();
   const { authService, authChecked, user, login, colorMode } = useAppContext();
-  const [isRegisterMode] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [authState, setAuthState] = useState(null);
   const [ssoStatus, setSsoStatus] = useState(null);
+
+  const ssoIssuer = ssoStatus?.oidc?.issuer || '';
+  const providerName = ssoStatus?.oidc?.providerName || (() => {
+    const lower = ssoIssuer.toLowerCase();
+    if (lower.includes('keycloak')) return 'Keycloak';
+    if (lower.includes('okta')) return 'Okta';
+    if (lower.includes('auth0')) return 'Auth0';
+    if (lower.includes('azure') || lower.includes('microsoft')) return 'Microsoft Entra';
+    if (lower.includes('google')) return 'Google';
+    if (lower.includes('gitlab')) return 'GitLab';
+    if (lower.includes('github')) return 'GitHub';
+    try {
+      const host = new URL(ssoIssuer).hostname;
+      if (host === 'localhost' || host === '127.0.0.1' || /^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+        return 'SSO';
+      }
+      return host.charAt(0).toUpperCase() + host.slice(1);
+    } catch {
+      return 'SSO';
+    }
+  })();
+  const providerIcon = ssoStatus?.oidc?.providerIcon || (() => {
+    try { return `${new URL(ssoIssuer).origin}/favicon.ico`; } catch { return ''; }
+  })();
+  const databaseEnabled = authState?.databaseEnabled === true;
+  const oidcEnabled = ssoStatus?.oidc?.enabled === true;
+  const samlEnabled = ssoStatus?.saml?.enabled === true;
 
   useEffect(() => {
     if (user) {
@@ -45,6 +71,7 @@ export const Login = () => {
         }
       } catch (err) {
         console.error('Error checking auth:', err);
+        setError('Unable to load sign-in options. Please reload the page.');
       }
     };
     if (authChecked && !user) {
@@ -67,7 +94,7 @@ export const Login = () => {
     }
   };
 
-  if (!authChecked || (authState === null && !user)) {
+  if (!authChecked || (authState === null && !user && !error)) {
     return (
       <Box
         display="flex"
@@ -209,27 +236,24 @@ export const Login = () => {
                 </Box>
               )}
 
-              <Box as="form" onSubmit={handleSubmit} w="100%">
-                {(
-
-                    <VStack spacing={4} align="stretch">
-                      <Input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="Username"
-                        required
-                      />
-                      <Input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Password"
-                        required
-                      />
-                    </VStack>
-                )}
-
+              {databaseEnabled && (
+                <Box as="form" onSubmit={handleSubmit} w="100%">
+                  <VStack spacing={4} align="stretch">
+                    <Input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Username"
+                      required
+                    />
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Password"
+                      required
+                    />
+                  </VStack>
                   <Button
                     type="submit"
                     w="100%"
@@ -265,14 +289,16 @@ export const Login = () => {
                         <Text>Processing...</Text>
                       </HStack>
                     ) : (
-                      isRegisterMode ? 'Create Account' : 'Sign In'
+                      'Sign In'
                     )}
                   </Button>
-              </Box>
+                </Box>
+              )}
 
               {/* SSO Login Options */}
-              {(ssoStatus.oidc.enabled || ssoStatus.saml.enabled) && (
+              {(oidcEnabled || samlEnabled) && (
                 <>
+                  {databaseEnabled && (
                     <HStack spacing={4} align="center" w="100%">
                       <Box h="1px" flex={1} bg={getBorderColor(colorMode, 'gray')} />
                       <Text
@@ -287,8 +313,9 @@ export const Login = () => {
                       </Text>
                       <Box h="1px" flex={1} bg={getBorderColor(colorMode, 'gray')} />
                     </HStack>
+                  )}
                   <VStack spacing={3} align="stretch" w="100%">
-                    {ssoStatus.oidc.enabled && (
+                    {oidcEnabled && (
                       <Button
                         as="a"
                         href={authService.getOIDCLoginURL()}
@@ -319,17 +346,30 @@ export const Login = () => {
                           w="20px"
                           h="20px"
                           borderRadius="sm"
-                          bg="blue.500"
+                          bg="transparent"
                           display="flex"
                           alignItems="center"
                           justifyContent="center"
+                          overflow="hidden"
+                          border="1px solid"
+                          borderColor={getBorderColor(colorMode, 'default')}
                         >
-                          <Text color="white" fontSize="xs" fontWeight="bold">O</Text>
+                          <img
+                            src={providerIcon}
+                            alt={`${providerName} icon`}
+                            width="20"
+                            height="20"
+                            style={{ objectFit: 'contain', display: 'block' }}
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                          {!ssoIssuer && (
+                            <Text color="white" fontSize="xs" fontWeight="bold">O</Text>
+                          )}
                         </Box>
-                        Sign in with OIDC
+                        Sign in with {providerName}
                       </Button>
                     )}
-                    {ssoStatus.saml.enabled && (
+                    {samlEnabled && (
                       <Button
                         as="a"
                         href={authService.getSAMLLoginURL()}
@@ -373,6 +413,11 @@ export const Login = () => {
                   </VStack>
                 </>
               )}
+              {authState && !databaseEnabled && !oidcEnabled && !samlEnabled && (
+                <Text role="alert" fontSize="sm" color={getTextColor(colorMode, 'secondary')}>
+                  No sign-in methods are available. Contact an administrator.
+                </Text>
+              )}
                 <Text
                   fontSize="sm"
                   textAlign="center"
@@ -390,4 +435,3 @@ export const Login = () => {
     </Box>
   );
 };
-

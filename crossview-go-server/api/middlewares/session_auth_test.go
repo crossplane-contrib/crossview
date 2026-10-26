@@ -5,10 +5,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"crossview-go-server/lib"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	"crossview-go-server/lib"
 )
 
 func setupTestRouter() *gin.Engine {
@@ -55,6 +55,7 @@ func TestSessionAuthMiddleware_Handler_Authorized(t *testing.T) {
 	router := setupTestRouter()
 	logger := setupTestLogger()
 	env := setupTestEnv()
+	env.DBEnabled = true
 	handler := setupTestRequestHandler()
 
 	store := cookie.NewStore([]byte(env.SessionSecret))
@@ -71,7 +72,13 @@ func TestSessionAuthMiddleware_Handler_Authorized(t *testing.T) {
 
 	session, _ := store.Get(req, "session")
 	session.Values["userId"] = uint(1)
-	session.Save(req, w)
+	if err := session.Save(req, w); err != nil {
+		t.Fatal(err)
+	}
+	for _, cookie := range w.Result().Cookies() {
+		req.AddCookie(cookie)
+	}
+	w = httptest.NewRecorder()
 
 	router.ServeHTTP(w, req)
 
@@ -88,4 +95,3 @@ func TestSessionAuthMiddleware_Setup(t *testing.T) {
 	middleware := NewSessionAuthMiddleware(handler, logger, env)
 	middleware.Setup()
 }
-

@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"net/http"
 
+	"crossview-go-server/api/middlewares"
 	"crossview-go-server/lib"
 	"crossview-go-server/models"
 
@@ -30,10 +31,11 @@ func (c *AuthController) Check(ctx *gin.Context) {
 	hasAdmin, _ := c.userRepo.HasAdmin()
 	hasUsers, _ := c.userRepo.Count()
 	unauthenticated := gin.H{
-		"authenticated": false,
-		"hasAdmin":      hasAdmin,
-		"hasUsers":      hasUsers > 0,
-		"authMode":      c.env.AuthMode,
+		"authenticated":   false,
+		"hasAdmin":        hasAdmin,
+		"hasUsers":        hasUsers > 0,
+		"authMode":        c.env.AuthMode,
+		"databaseEnabled": c.userRepo.DB() != nil,
 	}
 	userResponse := func(user *models.User) gin.H {
 		return gin.H{
@@ -44,9 +46,10 @@ func (c *AuthController) Check(ctx *gin.Context) {
 				"email":    user.Email,
 				"role":     user.Role,
 			},
-			"hasAdmin": hasAdmin,
-			"hasUsers": hasUsers > 0,
-			"authMode": c.env.AuthMode,
+			"hasAdmin":        hasAdmin,
+			"hasUsers":        hasUsers > 0,
+			"authMode":        c.env.AuthMode,
+			"databaseEnabled": c.userRepo.DB() != nil,
 		}
 	}
 
@@ -104,12 +107,21 @@ func (c *AuthController) Check(ctx *gin.Context) {
 		return
 	default:
 		session := sessions.Default(ctx)
-		userID := session.Get("userId")
-		if userID == nil {
+		if c.userRepo.DB() == nil {
+			user := middlewares.SSOIdentity(session)
+			if user == nil {
+				ctx.JSON(http.StatusOK, unauthenticated)
+				return
+			}
+			ctx.JSON(http.StatusOK, userResponse(user))
+			return
+		}
+		userID, validID := session.Get("userId").(uint)
+		if !validID || userID == 0 {
 			ctx.JSON(http.StatusOK, unauthenticated)
 			return
 		}
-		user, err := c.userRepo.FindByID(userID.(uint))
+		user, err := c.userRepo.FindByID(userID)
 		if err != nil || user == nil {
 			ctx.JSON(http.StatusOK, unauthenticated)
 			return
@@ -129,6 +141,10 @@ func authRandomPassword() string {
 }
 
 func (c *AuthController) Login(ctx *gin.Context) {
+	if c.userRepo.DB() == nil {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Password login is unavailable without a database. Use SSO."})
+		return
+	}
 	var req struct {
 		Username string `json:"username" binding:"required"`
 		Password string `json:"password" binding:"required"`
@@ -151,6 +167,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	}
 
 	session := sessions.Default(ctx)
+	session.Clear()
 	session.Set("userId", user.ID)
 	session.Set("userRole", user.Role)
 	if err := session.Save(); err != nil {
@@ -184,6 +201,10 @@ func (c *AuthController) Logout(ctx *gin.Context) {
 }
 
 func (c *AuthController) Register(ctx *gin.Context) {
+	if c.userRepo.DB() == nil {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Registration is unavailable without a database. Use SSO."})
+		return
+	}
 	var req struct {
 		Username string `json:"username" binding:"required"`
 		Email    string `json:"email" binding:"required"`

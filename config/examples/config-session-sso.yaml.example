@@ -1,5 +1,5 @@
 database:
-  enabled: true
+  enabled: true # Set false for SSO-only login without local password accounts
   host: localhost
   port: 8920
   database: crossview
@@ -48,6 +48,8 @@ sso:
     emailAttribute: email
     firstNameAttribute: given_name
     lastNameAttribute: family_name
+    providerName: Keycloak
+    providerIcon: "" # Optional browser-accessible icon URL
   saml:
     enabled: true
     entryPoint: http://localhost:8080/realms/crossview/protocol/saml
@@ -82,4 +84,3 @@ vite:
       api:
         target: http://localhost:3001
         changeOrigin: true
-
