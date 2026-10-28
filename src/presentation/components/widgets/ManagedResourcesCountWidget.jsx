@@ -6,13 +6,16 @@ import { Container } from '../common/Container.jsx';
 
 export const ManagedResourcesCountWidget = () => {
   const { kubernetesRepository, selectedContext } = useAppContext();
-  const [managedResources, setManagedResources] = useState([]);
+  const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let active = true;
     const loadData = async () => {
       if (!selectedContext) {
+        setCount(0);
+        setError(null);
         setLoading(false);
         return;
       }
@@ -25,21 +28,22 @@ export const ManagedResourcesCountWidget = () => {
           : selectedContext.name || selectedContext;
         
         const result = await new GetManagedResourcesUseCase(kubernetesRepository)
-          .execute(contextName, null, false);
-        setManagedResources(result?.items || []);
+          .execute(contextName, null, false, { limit: 1 });
+        if (active) setCount(result.totalCount);
       } catch (err) {
         console.warn('Failed to fetch managed resources:', err.message);
-        setError(err.message);
-        setManagedResources([]);
+        if (active) {
+          setError(err.message);
+          setCount(0);
+        }
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     loadData();
+    return () => { active = false; };
   }, [selectedContext, kubernetesRepository]);
-
-  const count = (managedResources || []).length;
 
   if (loading) {
     return (
@@ -66,4 +70,3 @@ export const ManagedResourcesCountWidget = () => {
     </Container>
   );
 };
-

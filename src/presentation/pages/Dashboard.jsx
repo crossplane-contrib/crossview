@@ -1,13 +1,13 @@
 import {
   Box,
   Text,
-  VStack,
 } from '@chakra-ui/react';
 import { lazy, Suspense, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppContext } from '../providers/AppProvider.jsx';
 import { ResourceDetails } from '../components/common/ResourceDetails.jsx';
-import { getBackgroundColor, getTextColor, getBorderColor, getStatusColor, getAccentColor } from '../utils/theme.js';
+import { DashboardDataContext, useDashboardData } from '../hooks/useDashboardData.js';
+import { getBackgroundColor, getTextColor, getBorderColor, getAccentColor } from '../utils/theme.js';
 
 const ProvidersStatusWidget = lazy(() => import('../components/widgets/ProvidersStatusWidget.jsx').then(module => ({ default: module.ProvidersStatusWidget })));
 const FunctionsCountWidget = lazy(() => import('../components/widgets/FunctionsCountWidget.jsx').then(module => ({ default: module.FunctionsCountWidget })));
@@ -48,7 +48,8 @@ const WidgetSuspense = ({ children }) => {
 
 export const Dashboard = () => {
   const location = useLocation();
-  const { selectedContext, colorMode } = useAppContext();
+  const { kubernetesRepository, selectedContext, colorMode } = useAppContext();
+  const dashboardData = useDashboardData(kubernetesRepository, selectedContext);
   const [selectedResource, setSelectedResource] = useState(null);
   const [navigationHistory, setNavigationHistory] = useState([]);
 
@@ -109,6 +110,7 @@ export const Dashboard = () => {
   }
 
   return (
+    <DashboardDataContext.Provider value={dashboardData}>
     <Box position="relative" pb={8}>
       <Box mb={4}>
         <Text fontSize="3xl" fontWeight="semibold" color={getTextColor(colorMode, 'primary')} _dark={{ color: getTextColor('dark', 'primary') }} mb={2}>
@@ -195,5 +197,6 @@ export const Dashboard = () => {
         />
       )}
     </Box>
+    </DashboardDataContext.Provider>
   );
 };
