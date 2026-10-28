@@ -1,3 +1,9 @@
+## Unreleased
+
+### Performance Improvements
+
+* **dashboard:** request one managed resource and use the API total count; share composite and claim data across widgets without truncating health or namespace totals (refs #289).
+
 # [4.7.0](https://github.com/crossplane-contrib/crossview/compare/v4.6.0...v4.7.0) (2026-10-26)
 
 Stable release consolidating the 4.7.0 release candidates and subsequent fixes.

@@ -8,6 +8,14 @@
 - **Widget-Based Layout** - Customizable dashboard widgets
 - **Resource Counts** - Track Claims, XRDs, Compositions, and Providers
 
+The managed resource count requests `/api/managed?limit=1` and uses `totalCount`,
+avoiding transfer of the entire managed resource list just to count it.
+Dashboard health, namespace distribution, recent activity, recent composite
+resources, and the claims count share a single composite/claim load per context.
+Health and namespace totals use the full dataset, not the recent-resource
+preview limits. Each shared dataset loads independently; switching contexts
+clears the previous data and ignores outstanding responses from the old context.
+
 ### 🔍 Resource Management
 - **Advanced Search** - Search across all resource types and namespaces
 - **Resource Browser** - Navigate resources by type, namespace, or label
@@ -144,4 +152,3 @@ Limitations:
 - **Resource Relations** - Understand Crossplane resource hierarchy
 - **Composition View** - Specialized views for Compositions and Claims
 - **Provider Monitoring** - Track Crossplane Provider status
-

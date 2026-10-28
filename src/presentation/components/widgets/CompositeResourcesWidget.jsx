@@ -1,46 +1,13 @@
 import { Box, Text, Spinner, HStack } from '@chakra-ui/react';
-import { useEffect, useState, useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { useAppContext } from '../../providers/AppProvider.jsx';
-import { GetCompositeResourcesUseCase } from '../../../domain/usecases/GetCompositeResourcesUseCase.js';
+import { DashboardDataContext } from '../../hooks/useDashboardData.js';
 import { Container } from '../common/Container.jsx';
 import { DataTable } from '../common/DataTable.jsx';
 import { getStatusColor, getStatusText, getSyncedStatus, getReadyStatus, getResponsiveStatus } from '../../utils/resourceStatus.js';
 
 export const CompositeResourcesWidget = ({ onResourceClick }) => {
-  const { kubernetesRepository, selectedContext } = useAppContext();
-  const [compositeResources, setCompositeResources] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (!selectedContext) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-        const contextName = typeof selectedContext === 'string' 
-          ? selectedContext 
-          : selectedContext.name || selectedContext;
-        
-        const data = await new GetCompositeResourcesUseCase(kubernetesRepository)
-          .execute(contextName, 20, null);
-        setCompositeResources(Array.isArray(data) ? data : (data?.items || []));
-      } catch (err) {
-        console.warn('Failed to fetch composite resources:', err.message);
-        setError(err.message);
-        setCompositeResources([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [selectedContext, kubernetesRepository]);
+  const { compositeResources: { items: compositeResources, loading, error } } = useContext(DashboardDataContext);
 
   const resources = useMemo(() => {
     // Sort by creation timestamp and take the 10 most recent
@@ -184,4 +151,3 @@ export const CompositeResourcesWidget = ({ onResourceClick }) => {
 CompositeResourcesWidget.propTypes = {
   onResourceClick: PropTypes.func,
 };
-
