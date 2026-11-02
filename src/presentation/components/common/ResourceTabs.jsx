@@ -1,5 +1,5 @@
 import { HStack, Button } from '@chakra-ui/react';
-import { FiActivity } from 'react-icons/fi';
+import { FiActivity, FiGitMerge } from 'react-icons/fi';
 
 export const ResourceTabs = ({ 
   activeTab, 
@@ -8,7 +8,8 @@ export const ResourceTabs = ({
   resource, 
   hasStatus, 
   hasRelations, 
-  isNamespaced 
+  isNamespaced,
+  hasDrift,
 }) => {
   return (
     <HStack spacing={0} borderBottom="1px solid" borderColor="gray.200" _dark={{ borderColor: 'gray.700' }} mb={4}>
@@ -98,6 +99,25 @@ export const ResourceTabs = ({
           leftIcon={<FiActivity />}
         >
           Events
+        </Button>
+      )}
+      {hasDrift && (
+        <Button
+          variant="ghost"
+          size="sm"
+          borderRadius="none"
+          borderBottom="2px solid"
+          borderBottomColor={activeTab === 'drift' ? 'orange.500' : 'transparent'}
+          color={activeTab === 'drift' ? 'orange.600' : 'gray.600'}
+          _dark={{
+            color: activeTab === 'drift' ? 'orange.400' : 'gray.400',
+            borderBottomColor: activeTab === 'drift' ? 'orange.400' : 'transparent',
+          }}
+          onClick={() => setActiveTab('drift')}
+          _hover={{ bg: 'gray.100', _dark: { bg: 'gray.700' } }}
+          leftIcon={<FiGitMerge />}
+        >
+          Drift
         </Button>
       )}
     </HStack>
