@@ -90,6 +90,7 @@ The following table lists the configurable parameters and their default values:
 | `image.tag`                      | Image tag (leave empty for Chart.AppVersion)                                | `""` (uses chart version)                  |
 | `app.replicas`                   | Number of replicas                                                          | `1`                                        |
 | `database.enabled`               | Enable bundled PostgreSQL                                                   | `true`                                     |
+| `database.nodeSelector`          | Node selector for the bundled PostgreSQL pod                                | `{}`                                       |
 | `config.database.enabled`        | Enable application database access; independent of bundled PostgreSQL       | `true`                                     |
 | `config.sso.oidc.providerName`    | Optional OIDC login-button name; inferred from issuer when empty            | `""`                                       |
 | `config.sso.oidc.providerIcon`    | Optional browser-accessible icon URL; issuer favicon when empty             | `""`                                       |

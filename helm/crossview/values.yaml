@@ -158,6 +158,8 @@ database:
     capabilities:
       drop:
         - ALL
+  # Node selector for the bundled PostgreSQL pod
+  nodeSelector: {}
 
 # Configuration
 config:
