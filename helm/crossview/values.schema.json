@@ -193,6 +193,12 @@
             "enabled": { "type": "boolean", "default": true },
             "size": { "type": "string", "default": "10Gi" }
           }
+        },
+        "nodeSelector": {
+          "type": "object",
+          "description": "Node selector for the bundled PostgreSQL pod",
+          "default": {},
+          "additionalProperties": { "type": "string" }
         }
       }
     },
