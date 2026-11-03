@@ -160,6 +160,8 @@ database:
         - ALL
   # Node selector for the bundled PostgreSQL pod
   nodeSelector: {}
+  # Tolerations for the bundled PostgreSQL pod
+  tolerations: []
 
 # Configuration
 config:
