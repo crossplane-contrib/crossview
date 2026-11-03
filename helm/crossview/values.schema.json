@@ -199,6 +199,12 @@
           "description": "Node selector for the bundled PostgreSQL pod",
           "default": {},
           "additionalProperties": { "type": "string" }
+        },
+        "tolerations": {
+          "type": "array",
+          "description": "Tolerations for the bundled PostgreSQL pod",
+          "default": [],
+          "items": { "type": "object" }
         }
       }
     },
