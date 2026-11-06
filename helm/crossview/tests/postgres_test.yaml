@@ -133,3 +133,113 @@ tests:
               operator: Equal
               value: postgres
               effect: NoSchedule
+
+  - it: should default to Recreate strategy
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+      - notExists:
+          path: spec.strategy.rollingUpdate
+
+  - it: should allow RollingUpdate strategy with rollingUpdate settings
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+      database:
+        strategy:
+          type: RollingUpdate
+          rollingUpdate:
+            maxSurge: 0
+            maxUnavailable: 1
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: RollingUpdate
+      - equal:
+          path: spec.strategy.rollingUpdate
+          value:
+            maxSurge: 0
+            maxUnavailable: 1
+
+  - it: should omit rollingUpdate settings when strategy is Recreate
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+      database:
+        strategy:
+          type: Recreate
+          rollingUpdate:
+            maxSurge: 1
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+      - notExists:
+          path: spec.strategy.rollingUpdate
+
+  - it: should omit affinity by default
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - notExists:
+          path: spec.template.spec.affinity
+
+  - it: should set affinity when configured
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+      database:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: topology.kubernetes.io/zone
+                      operator: In
+                      values: ["zone-a"]
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: topology.kubernetes.io/zone
+
+  - it: should not inherit app-level scheduling settings
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+      nodeSelector:
+        role: app
+      affinity:
+        podAntiAffinity: {}
+      tolerations:
+        - key: app
+          operator: Exists
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - notExists:
+          path: spec.template.spec.nodeSelector
+      - notExists:
+          path: spec.template.spec.affinity
+      - notExists:
+          path: spec.template.spec.tolerations

@@ -90,7 +90,9 @@ The following table lists the configurable parameters and their default values:
 | `image.tag`                      | Image tag (leave empty for Chart.AppVersion)                                | `""` (uses chart version)                  |
 | `app.replicas`                   | Number of replicas                                                          | `1`                                        |
 | `database.enabled`               | Enable bundled PostgreSQL                                                   | `true`                                     |
+| `database.strategy.type`         | Bundled PostgreSQL rollout strategy (`Recreate` or `RollingUpdate`)         | `Recreate`                                 |
 | `database.nodeSelector`          | Node selector for the bundled PostgreSQL pod                                | `{}`                                       |
+| `database.affinity`              | Affinity rules for the bundled PostgreSQL pod                               | `{}`                                       |
 | `database.tolerations`           | Tolerations for the bundled PostgreSQL pod                                  | `[]`                                       |
 | `config.database.enabled`        | Enable application database access; independent of bundled PostgreSQL       | `true`                                     |
 | `config.sso.oidc.providerName`    | Optional OIDC login-button name; defaults to OIDC when empty                 | `""`                                       |
