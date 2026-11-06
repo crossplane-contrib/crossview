@@ -14,8 +14,22 @@ import { getBackgroundColor } from '../../utils/theme.js';
 export const Layout = ({ children }) => {
   const { colorMode, selectedContextError, selectedContext, isInClusterMode, contexts, setSelectedContext } = useAppContext();
   const { watchedResources, isCollapsed: isOnWatchCollapsed, notifications, removeNotification } = useOnWatchResources();
-  const [sidebarWidth, setSidebarWidth] = useState(280);
-  const [contextSidebarWidth, setContextSidebarWidth] = useState(60);
+  const [initialSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('sidebarCollapsed') === 'true';
+    } catch (error) {
+      console.warn('Failed to restore sidebar collapse state:', error);
+      return false;
+    }
+  });
+  const [sidebarWidth, setSidebarWidth] = useState(initialSidebarCollapsed ? 60 : 280);
+  const [contextSidebarWidth, setContextSidebarWidth] = useState(() =>
+    isInClusterMode || localStorage.getItem('contextSidebarCollapsed') === 'true' ? 0 : 60);
+  const [transitionsEnabled, setTransitionsEnabled] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setTransitionsEnabled(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
   const [showContextSidebar, setShowContextSidebar] = useState(() => {
     if (isInClusterMode) return false;
     const saved = localStorage.getItem('contextSidebarCollapsed');
@@ -136,16 +150,17 @@ export const Layout = ({ children }) => {
   return (
     <Box minH="100vh" bg={bgColor}>
       {!isInClusterMode && showContextSidebar && <ContextSidebar />}
-      <Sidebar onToggle={handleSidebarToggle} onResize={handleSidebarResize} />
+      <Sidebar initialCollapsed={initialSidebarCollapsed} transitionsEnabled={transitionsEnabled}
+        onToggle={handleSidebarToggle} onResize={handleSidebarResize} />
       <Box 
         ml={`${totalLeftWidth}px`} 
         mr={`${onWatchWidth}px`}
-        transition="margin-left 0.2s, margin-right 0.3s"
+        transition={transitionsEnabled ? 'margin-left 0.2s, margin-right 0.3s' : 'none'}
         w={`calc(100% - ${totalLeftWidth}px - ${onWatchWidth}px)`}
         maxW={`calc(100% - ${totalLeftWidth}px - ${onWatchWidth}px)`}
         overflow="hidden"
       >
-        <Header sidebarWidth={totalLeftWidth} />
+        <Header sidebarWidth={totalLeftWidth} transitionsEnabled={transitionsEnabled} />
         <Box pt="64px" px={6} pb={0} mb={0} bg={bgColor} minH="calc(100vh - 64px)" w="100%" maxW="100%" overflowX="hidden">
           <Box pt={6} pb={0} mb={0}>
             {children}
@@ -176,4 +191,3 @@ export const Layout = ({ children }) => {
 Layout.propTypes = {
   children: PropTypes.node,
 };
-

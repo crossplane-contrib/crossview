@@ -5,7 +5,7 @@ export const GraphLegend = () => {
   const muted = useMutedColor();
   return (
     <Text fontSize="xs" color={muted} mt={2}>
-      Arrows take the colour of what they point to. A red border means Ready or Synced is False, and an orange border means Ready is Unknown. Scrolling moves the page; hold Ctrl and scroll, or pinch, to zoom the graph.
+      Connections end in filled circles at the target resource and take its colour. Hover or focus a resource to highlight its connections across columns. Select a row to keep its relationships highlighted and open resource details. A red marker means Ready or Synced is False, and an orange marker means Ready is Unknown or the resource is unresolved.
     </Text>
   );
 };

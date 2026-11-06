@@ -60,11 +60,26 @@
 - **Real-Time Resource Watching**: Monitor any Kubernetes resource in real-time with event-driven updates using Kubernetes Informers
 - **Multi-Cluster Support**: Manage and switch between multiple Kubernetes contexts seamlessly
 - **Resource Visualization**: Browse and visualize Crossplane resources (providers, XRDs, compositions, claims, etc.)
+- **Resource Graph**: Browse theme-aware list columns arranged as XRDs, compositions, functions above composite resources in a shared column, and composed resources. Compositions connect directly to the adjacent functions and composite resources; composite resources connect directly to composed resources, with spacious connection gutters and filled-circle endpoints. Hover or focus a row to highlight its connections and related resources, or select it to open details. Filters and resource limits remain available; there is no graph canvas, panning, or zooming.
+- **Infrastructure Dashboard**: View snapshot metrics, readiness and creation charts, namespace distribution, package health, composition usage, resources needing attention, and recently created resources. Use the Panels menu to show or hide panels, reorder them, resize them, or reset the layout; preferences are saved in your browser.
 - **Resource Details**: View comprehensive resource information including status conditions, metadata, events, and relationships
 - **Modern UI**: Built with React and Chakra UI with dark mode support
+- **Persistent Navigation**: The main sidebar remembers whether it is collapsed or expanded across page reloads in the same browser.
 - **High Performance**: Backend built with Go and Gin framework for optimal performance
 - **WebSocket Support**: Real-time updates via WebSocket connections
 - **SSO Integration**: Support for OIDC and SAML authentication
+
+The dashboard loads a snapshot for the selected Kubernetes context; use Refresh to
+reload it. Failed collections are reported as unavailable or partial, and totals
+include successfully loaded resources only. Creation charts show surviving
+resources by creation date (UTC), not an audit log or historical health.
+
+The dashboard page and its dashboard-specific charts, layout, hooks, utilities,
+and overview use case are shared byte-for-byte with Crossview Enterprise. Keep
+their paths and contents identical when syncing changes between editions,
+including the existing `crossview.enterprise.dashboard.layout` browser storage
+key. Identical files reduce merge conflicts but do not guarantee conflict-free
+future merges.
 
 ## Getting Started
 
