@@ -1,4 +1,4 @@
-import { Box, Button, HStack, Spinner, Text, VStack } from '@chakra-ui/react';
+import { Box, Button, HStack, Skeleton, Text, VStack } from '@chakra-ui/react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FiArrowUpRight, FiRefreshCw, FiActivity, FiLayers, FiServer, FiPackage } from 'react-icons/fi';
@@ -12,6 +12,7 @@ import { DataTable } from '../components/common/DataTable.jsx';
 import { CreationChart, NamespaceChart, ReadinessChart } from '../components/widgets/DashboardCharts.jsx';
 import { DashboardGrid, DashboardPanelMenu } from '../components/widgets/DashboardLayout.jsx';
 import { buildDashboardSummary, getReadiness, resourceKey } from '../utils/dashboard.js';
+import { DASHBOARD_PANELS } from '../utils/dashboardLayout.js';
 import { getAccentColor, getBackgroundColor, getStatusColor, getTextColor } from '../utils/theme.js';
 
 const HEALTH_LABELS = { ready: 'Ready', notReady: 'Not ready', unknown: 'Unknown' };
@@ -77,7 +78,7 @@ ResourceList.propTypes = {
 export const Dashboard = () => {
   const location = useLocation();
   const { kubernetesRepository, selectedContext, colorMode } = useAppContext();
-  const { data, loading, error, refresh } = useDashboardOverview(kubernetesRepository, selectedContext);
+  const { data, loading, refreshing, error, refresh } = useDashboardOverview(kubernetesRepository, selectedContext);
   const dashboardLayout = useDashboardLayout();
   const [selectedResource, setSelectedResource] = useState(null);
   const [navigationHistory, setNavigationHistory] = useState([]);
@@ -132,18 +133,40 @@ export const Dashboard = () => {
         </Box>
         <HStack gap={2}>
           <DashboardPanelMenu layout={dashboardLayout.layout} onToggle={dashboardLayout.toggle} onReset={dashboardLayout.reset} />
-          {contextName && <Button variant="outline" size="sm" onClick={refresh} disabled={loading}>
-            <FiRefreshCw /> {loading ? 'Loading snapshot' : 'Refresh'}
+          {contextName && <Button variant="outline" size="sm" onClick={refresh} disabled={loading || refreshing}>
+            <FiRefreshCw /> {loading ? 'Loading snapshot' : refreshing ? 'Refreshing snapshot' : 'Refresh'}
           </Button>}
         </HStack>
       </HStack>
 
       {dashboardLayout.error && <Text role="alert" fontSize="sm" mb={4} color={getStatusColor('red')}>{dashboardLayout.error}</Text>}
       {!contextName && <Container p={8}><Text>Select a Kubernetes context to view your infrastructure dashboard.</Text></Container>}
-      {loading && <Container p={12} role="status"><VStack gap={3}><Spinner /><Text fontSize="sm">Loading dashboard snapshot...</Text></VStack></Container>}
+      {loading && <Box role="status" aria-label="Loading dashboard panels" aria-busy="true">
+        <DashboardGrid layout={dashboardLayout.layout} onMove={dashboardLayout.move}
+          onReorder={dashboardLayout.reorder} onResize={dashboardLayout.resize}>
+          {DASHBOARD_PANELS.map(panel => (
+            <Panel key={panel.id} id={panel.id} title={panel.label} description="Loading snapshot...">
+              {panel.id === 'metrics' ? (
+                <Box display="grid" gridTemplateColumns={{ base: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))', '2xl': 'repeat(6, minmax(0, 1fr))' }} gap={4}>
+                  {METRICS.map(metric => <Container key={metric.key} p={4} borderRadius="xl">
+                    <Skeleton h={4} w={6} mb={3} />
+                    <Skeleton h={9} w="60%" mb={2} />
+                    <Text fontSize="xs" color={muted}>{metric.label}</Text>
+                  </Container>)}
+                </Box>
+              ) : <VStack align="stretch" gap={4} minH="220px" aria-hidden="true">
+                <Skeleton h={panel.id === 'readiness' || panel.id === 'creation' ? '150px' : 8} />
+                <Skeleton h={4} w="80%" />
+                <Skeleton h={4} w="60%" />
+                <Skeleton h={4} w="90%" />
+              </VStack>}
+            </Panel>
+          ))}
+        </DashboardGrid>
+      </Box>}
       {error && <Container p={6} role="alert"><Text color={getStatusColor('red')}>Unable to load dashboard: {error}</Text><Button mt={3} onClick={refresh}>Retry</Button></Container>}
 
-      {!loading && summary && <>
+      {summary && <>
         {partial && <Box role="alert" p={4} mb={5} borderRadius="lg" border="1px solid" borderColor={getStatusColor('yellow')}>
           <Text fontWeight="semibold" fontSize="sm">Incomplete snapshot — charts and totals include successfully loaded resources only.</Text>
           <VStack align="stretch" gap={1} mt={2}>

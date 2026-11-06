@@ -1,10 +1,10 @@
-import { Box, HStack, Text, Button } from '@chakra-ui/react';
+import { Box, HStack, Text, Button, Skeleton } from '@chakra-ui/react';
 import PropTypes from 'prop-types';
-import { Input } from '../common/Input.jsx';
+import { GraphResourceSearch } from './GraphResourceSearch.jsx';
 import { Dropdown } from '../common/Dropdown.jsx';
 import { NODE_TYPES, NODE_TYPE_LABELS, formatCount } from '../../utils/graph/graphModel.js';
 import { NODE_TYPE_COLORS } from './graphEdgeStyles.js';
-import { graphFiltersShape, optionShape } from './graphPropTypes.js';
+import { graphFiltersShape, graphNodeShape, optionShape } from './graphPropTypes.js';
 import { useAppContext } from '../../providers/AppProvider.jsx';
 import { getBorderColor, getAccentColor } from '../../utils/theme.js';
 import { getHealthColor } from '../common/ResourceRelations/utils.js';
@@ -64,15 +64,16 @@ Toggle.propTypes = {
   children: PropTypes.node,
 };
 
-const TypeToggle = ({ type, count, active, onClick }) => (
+const TypeToggle = ({ type, count, active, onClick, loading }) => (
   <Toggle color={NODE_TYPE_COLORS[type]} active={active} onClick={onClick}>
     <Box w="4px" h="14px" borderRadius="sm" bg={NODE_TYPE_COLORS[type]} opacity={active ? 1 : 0.45} />
     {NODE_TYPE_LABELS[type]}
-    <Text as="span" fontSize="xs" opacity={0.7}>{formatCount(count)}</Text>
+    {loading ? <Skeleton h={3} w={5} /> : <Text as="span" fontSize="xs" opacity={0.7}>{formatCount(count)}</Text>}
   </Toggle>
 );
 
 TypeToggle.propTypes = {
+  loading: PropTypes.bool,
   type: PropTypes.string.isRequired,
   count: PropTypes.number.isRequired,
   active: PropTypes.bool.isRequired,
@@ -123,7 +124,7 @@ FocusControls.propTypes = {
 
 const withAllOption = (allLabel, options) => [{ value: '', label: allLabel }, ...options];
 
-export const GraphFilters = ({ filters, typeCounts, namespaces, kinds, focusLabel, selectedId, selectedLabel, canClear, onChange, onClear }) => {
+export const GraphFilters = ({ filters, typeCounts, namespaces, kinds, nodes, loading, focusLabel, selectedId, selectedLabel, canClear, onChange, onClear }) => {
   const { colorMode } = useAppContext();
   const borderColor = getBorderColor(colorMode);
   const namespaceOptions = withAllOption('All namespaces', namespaces.map((ns) => ({ value: ns, label: ns })));
@@ -140,17 +141,14 @@ export const GraphFilters = ({ filters, typeCounts, namespaces, kinds, focusLabe
     <Box border="1px solid" borderColor={borderColor} borderRadius="md" px={4} mb={3}>
       <Section label="Show" borderColor={borderColor} first>
         {NODE_TYPES.map((type) => (
-          <TypeToggle key={type} type={type} count={typeCounts[type]} active={filters.types.includes(type)} onClick={() => toggleType(type)} />
+          <TypeToggle key={type} type={type} count={typeCounts[type]} loading={loading} active={filters.types.includes(type)} onClick={() => toggleType(type)} />
         ))}
       </Section>
 
       <Section label="Filter" borderColor={borderColor}>
-        <Input
-          placeholder="Search name, kind, namespace"
-          value={filters.search}
-          onChange={(e) => onChange({ search: e.target.value })}
-          maxW="280px"
-        />
+        <GraphResourceSearch nodes={nodes} loading={loading} colorMode={colorMode}
+          query={filters.search} onQueryChange={search => onChange({ search })}
+          onFocusResource={focus => onChange({ focus })} />
         <Dropdown options={withAllOption('All kinds', kinds)} value={filters.kind} onChange={(kind) => onChange({ kind })} minW="360px" />
         <Dropdown options={namespaceOptions} value={filters.namespace} onChange={(namespace) => onChange({ namespace })} minW="180px" />
         <Toggle color={getHealthColor('healthy')} active={filters.health === 'healthy'} onClick={() => toggleHealth('healthy')}>
@@ -177,6 +175,8 @@ export const GraphFilters = ({ filters, typeCounts, namespaces, kinds, focusLabe
 };
 
 GraphFilters.propTypes = {
+  nodes: PropTypes.arrayOf(graphNodeShape).isRequired,
+  loading: PropTypes.bool.isRequired,
   filters: graphFiltersShape.isRequired,
   typeCounts: PropTypes.objectOf(PropTypes.number).isRequired,
   namespaces: PropTypes.arrayOf(PropTypes.string).isRequired,

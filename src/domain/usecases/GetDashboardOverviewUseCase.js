@@ -74,12 +74,6 @@ export class GetDashboardOverviewUseCase {
       }
     };
 
-    await Promise.all([
-      ...COLLECTIONS.map(([key, apiVersion, kind]) =>
-        capture(key, () => this.list(context, apiVersion, kind))),
-      capture('managed', () => this.listManaged(context)),
-    ]);
-
     const loadDefinedResources = async (key, namesKey) => {
       if (data.xrds === null) {
         data[key] = null;
@@ -112,9 +106,15 @@ export class GetDashboardOverviewUseCase {
       });
     };
 
+    const collectionLoads = new Map(COLLECTIONS.map(([key, apiVersion, kind]) =>
+      [key, capture(key, () => this.list(context, apiVersion, kind))]));
     await Promise.all([
-      loadDefinedResources('compositeResources', 'names'),
-      loadDefinedResources('claims', 'claimNames'),
+      ...collectionLoads.values(),
+      capture('managed', () => this.listManaged(context)),
+      collectionLoads.get('xrds').then(() => Promise.all([
+        loadDefinedResources('compositeResources', 'names'),
+        loadDefinedResources('claims', 'claimNames'),
+      ])),
     ]);
 
     return {

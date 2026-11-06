@@ -1,4 +1,4 @@
-import { Box, HStack, Text } from '@chakra-ui/react';
+import { Box, HStack, Skeleton, Text, VStack } from '@chakra-ui/react';
 import { useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { ResourceColumnRow } from './ResourceColumnRow.jsx';
@@ -16,7 +16,7 @@ const COLUMN_GROUPS = [
   [NODE_TYPE.COMPOSED],
 ];
 
-export const ResourceColumns = ({ nodes, edges, types, colorMode, withoutComposition, partialCounts, onSelect, onHover }) => {
+export const ResourceColumns = ({ nodes, edges, types, colorMode, withoutComposition, partialCounts, onSelect, onHover, loading = false }) => {
   const visibleColumns = COLUMN_GROUPS.map(group => group.filter(type => types.includes(type)))
     .filter(group => group.length > 0);
   const gridRef = useRef(null);
@@ -29,6 +29,7 @@ export const ResourceColumns = ({ nodes, edges, types, colorMode, withoutComposi
   }, [nodes]);
 
   useLayoutEffect(() => {
+    if (loading) return;
     const grid = gridRef.current;
     let frame;
     const measure = () => {
@@ -52,10 +53,11 @@ export const ResourceColumns = ({ nodes, edges, types, colorMode, withoutComposi
     observer.observe(grid);
     grid.querySelectorAll('[data-resource-id]').forEach(row => observer.observe(row));
     return () => { observer.disconnect(); cancelAnimationFrame(frame); };
-  }, [nodes, types, partialCounts]);
+  }, [nodes, types, partialCounts, loading]);
 
   return (
-    <Box overflowX="auto" p={3} flex={1} display="flex" flexDirection="column">
+    <Box overflowX="auto" p={3} flex={1} display="flex" flexDirection="column"
+      aria-busy={loading} role={loading ? 'status' : undefined} aria-label={loading ? 'Loading graph columns' : undefined}>
       <Box ref={gridRef} position="relative" display="grid" minW="max-content" width="100%" py={16} px={8}
         gridTemplateColumns={`repeat(${visibleColumns.length}, minmax(260px, 1fr))`} gap={24} flex={1} alignItems="start">
         {visibleColumns.map((group, column) => (
@@ -69,7 +71,7 @@ export const ResourceColumns = ({ nodes, edges, types, colorMode, withoutComposi
                     <Box w={1} h={4} borderRadius="full" bg={NODE_TYPE_COLORS[type]} />
                     <Text as="h2" fontSize="sm" fontWeight="semibold">{NODE_TYPE_LABELS[type]}</Text>
                   </HStack>
-                  <Text fontSize="xs" color={getTextColor(colorMode, 'secondary')}>{formatCount(columns.get(type).length)}</Text>
+                  {loading ? <Skeleton w={6} h={4} /> : <Text fontSize="xs" color={getTextColor(colorMode, 'secondary')}>{formatCount(columns.get(type).length)}</Text>}
                 </HStack>
                 <Box as="ul" listStyleType="none" m={0} p={0}>
                   {columns.get(type).map(node => (
@@ -79,7 +81,13 @@ export const ResourceColumns = ({ nodes, edges, types, colorMode, withoutComposi
                     </Box>
                   ))}
                 </Box>
-                {columns.get(type).length === 0 && <Text p={4} fontSize="sm" color={getTextColor(colorMode, 'secondary')}>No matching resources.</Text>}
+                {loading && <VStack p={3} gap={4} align="stretch" aria-hidden="true">
+                  {[0, 1, 2, 3].map(row => <Box key={row}>
+                    <Skeleton h={3} w="40%" mb={2} />
+                    <Skeleton h={5} w={row % 2 ? '70%' : '90%'} />
+                  </Box>)}
+                </VStack>}
+                {!loading && columns.get(type).length === 0 && <Text p={4} fontSize="sm" color={getTextColor(colorMode, 'secondary')}>No matching resources.</Text>}
               </Box>
             ))}
           </Box>
@@ -108,6 +116,7 @@ export const ResourceColumns = ({ nodes, edges, types, colorMode, withoutComposi
 };
 
 ResourceColumns.propTypes = {
+  loading: PropTypes.bool,
   nodes: PropTypes.arrayOf(graphNodeShape).isRequired,
   edges: PropTypes.arrayOf(PropTypes.shape({
     source: PropTypes.string.isRequired, target: PropTypes.string.isRequired,

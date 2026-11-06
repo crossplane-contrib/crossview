@@ -1,62 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { GetGraphUseCase } from '../../domain/usecases/GetGraphUseCase.js';
 import { withoutComposedStubs } from '../utils/graph/graphHealth.js';
+import { useCachedSnapshot } from './useCachedSnapshot.js';
+import { readSnapshot } from '../utils/snapshotCache.js';
 
 const EMPTY_GRAPH = { nodes: [], edges: [], warnings: [] };
-
-const contextNameOf = (context) => (typeof context === 'string' ? context : context.name || context);
 
 // Loads the graph without the slow managed resource list, so it appears sooner. Once health is
 // wanted the graph is loaded again with it, and keeps it for the rest of the visit.
 export const useGraphData = (kubernetesRepository, selectedContext, wantHealth) => {
-  const [raw, setRaw] = useState(EMPTY_GRAPH);
-  const [healthLoaded, setHealthLoaded] = useState(false);
-  const [everWanted, setEverWanted] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
-  const loadedContext = useRef(null);
-  const includeHealth = everWanted || wantHealth;
-
-  useEffect(() => {
-    if (wantHealth) setEverWanted(true);
-  }, [wantHealth]);
-
-  useEffect(() => {
-    if (!selectedContext) {
-      setLoading(false);
-      return undefined;
-    }
-    const contextName = contextNameOf(selectedContext);
-    let cancelled = false;
-    const load = async () => {
-      // Loading again for the same context keeps the graph on screen; a new context starts over.
-      const startOver = loadedContext.current !== contextName;
-      try {
-        setLoading(startOver);
-        setRefreshing(!startOver);
-        setError(null);
-        const data = await new GetGraphUseCase(kubernetesRepository).execute(contextName, { includeManaged: includeHealth });
-        if (cancelled) return;
-        setRaw(data);
-        setHealthLoaded(includeHealth);
-        loadedContext.current = contextName;
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-          setRefreshing(false);
-        }
-      }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedContext, kubernetesRepository, includeHealth]);
-
+  const contextName = typeof selectedContext === 'string' ? selectedContext : selectedContext?.name;
+  const [healthContext, setHealthContext] = useState(null);
+  if (wantHealth && contextName && healthContext !== contextName) setHealthContext(contextName);
+  const healthKey = `graph:health:${contextName}`;
+  const includeHealth = wantHealth || healthContext === contextName || Boolean(readSnapshot(kubernetesRepository, healthKey));
+  const key = contextName ? (includeHealth ? healthKey : `graph:structure:${contextName}`) : null;
+  const load = useCallback(async () => ({
+    graph: await new GetGraphUseCase(kubernetesRepository).execute(contextName, { includeManaged: includeHealth }),
+    healthLoaded: includeHealth,
+  }), [kubernetesRepository, contextName, includeHealth]);
+  const snapshot = useCachedSnapshot(kubernetesRepository, key, load);
+  const fallback = contextName ? readSnapshot(kubernetesRepository, `graph:structure:${contextName}`) : null;
+  const data = snapshot.data || fallback;
+  const healthLoaded = data?.healthLoaded || false;
+  const raw = data?.graph || EMPTY_GRAPH;
   const graph = useMemo(() => withoutComposedStubs(raw, healthLoaded), [raw, healthLoaded]);
-
-  return { graph, healthLoaded, loading, refreshing, error };
+  return { ...snapshot, graph, healthLoaded, loading: snapshot.loading && !data,
+    refreshing: snapshot.refreshing || (snapshot.loading && Boolean(data)) };
 };
