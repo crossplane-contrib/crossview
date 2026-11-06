@@ -1,3 +1,13 @@
+# Unreleased
+
+### Bug Fixes
+
+* **chart:** default the bundled PostgreSQL Deployment to the `Recreate` strategy so rollouts no longer hang on `ReadWriteOnce` volumes; configurable via `database.strategy` ([#36](https://github.com/crossplane-contrib/crossview/issues/36))
+
+### Features
+
+* **chart:** add `database.nodeSelector`, `database.affinity`, and `database.tolerations` for scheduling the bundled PostgreSQL pod
+
 # [4.7.0](https://github.com/crossplane-contrib/crossview/compare/v4.6.0...v4.7.0) (2026-10-26)
 
 Stable release consolidating the 4.7.0 release candidates and subsequent fixes.
