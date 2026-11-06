@@ -6,6 +6,7 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { useState, useRef, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { FiUser, FiLogOut, FiSettings, FiMoon, FiSun, FiBook } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { SearchBar } from '../common/SearchBar.jsx';
@@ -13,7 +14,7 @@ import { Dialog } from '../common/Dialog.jsx';
 import { getBorderColor, getBackgroundColor, getTextColor, getStatusColor } from '../../utils/theme.js';
 import { useAppContext } from '../../providers/AppProvider.jsx';
 
-export const Header = ({ sidebarWidth }) => {
+export const Header = ({ sidebarWidth, transitionsEnabled = true }) => {
   const { 
     selectedContext, 
     selectedContextError, 
@@ -82,7 +83,7 @@ export const Header = ({ sidebarWidth }) => {
       px={6}
       display="flex"
       alignItems="center"
-      transition="left 0.2s"
+      transition={transitionsEnabled ? 'left 0.2s' : 'none'}
     >
       <HStack h="100%" justify="space-between" w="100%" spacing={6}>
         <HStack spacing={4} flex={1} align="center">
@@ -249,4 +250,9 @@ export const Header = ({ sidebarWidth }) => {
       />
     </Box>
   );
+};
+
+Header.propTypes = {
+  sidebarWidth: PropTypes.number.isRequired,
+  transitionsEnabled: PropTypes.bool,
 };

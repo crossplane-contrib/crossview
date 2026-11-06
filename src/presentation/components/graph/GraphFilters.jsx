@@ -80,7 +80,7 @@ TypeToggle.propTypes = {
 };
 
 const describeFocusState = ({ focusLabel, selectedLabel, hasFocus, selectionDiffers, hasSelection }) => {
-  if (!hasFocus) return hasSelection ? `Selected: ${selectedLabel}` : 'Select a node, then focus to see only its chain';
+  if (!hasFocus) return hasSelection ? `Selected: ${selectedLabel}` : 'Select a resource, then focus to see only its relationships';
   return selectionDiffers ? `Focused on ${focusLabel}. Selected: ${selectedLabel}` : `Focused on ${focusLabel}`;
 };
 

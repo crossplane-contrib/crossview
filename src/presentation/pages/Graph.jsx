@@ -2,15 +2,13 @@ import { Box, Text, HStack } from '@chakra-ui/react';
 import { useDeferredValue, useEffect, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useAppContext } from '../providers/AppProvider.jsx';
-import { getBorderColor, getTextColor } from '../utils/theme.js';
+import { getBackgroundColor, getBorderColor, getTextColor } from '../utils/theme.js';
 import { ResourceDetails } from '../components/common/ResourceDetails.jsx';
 import { LoadingSpinner } from '../components/common/LoadingSpinner.jsx';
-import { GraphCanvas } from '../components/graph/GraphCanvas.jsx';
+import { ResourceColumns } from '../components/graph/ResourceColumns.jsx';
 import { GraphFilters } from '../components/graph/GraphFilters.jsx';
-import { GraphLegend } from '../components/graph/GraphLegend.jsx';
 import { GraphStatus, GraphNotices } from '../components/graph/GraphStatus.jsx';
 import { GraphBlocked } from '../components/graph/GraphBlocked.jsx';
-import { buildFlowNodes, buildFlowEdges } from '../components/graph/graphFlowElements.js';
 import { GraphHighlightContext, createHighlightStore } from '../components/graph/GraphHighlightContext.js';
 import { useGraphData } from '../hooks/useGraphData.js';
 import { useGraphFilters } from '../hooks/useGraphFilters.js';
@@ -23,12 +21,9 @@ import { getRenderBudget, BUDGET } from '../utils/graph/graphBudget.js';
 import { describeAttention, describeHeadline, describeLimitHint, summarizeAlerts, buildNotices } from '../utils/graph/graphMessages.js';
 import { summarizeGraph } from '../utils/graph/graphSummary.js';
 import { indexGraph, getLineage, pickHighlightId } from '../utils/graph/graphLineage.js';
-import { layoutGraph } from '../utils/graph/graphLayout.js';
 import { NODE_TYPES, NODE_TYPE_LABELS, nodeLabel } from '../utils/graph/graphModel.js';
 import { NODE_TYPE_COLORS } from '../components/graph/graphEdgeStyles.js';
-import { GRAPH_CANVAS_CSS, GRAPH_HIGHLIGHT_CSS } from '../components/graph/graphCanvasStyles.js';
 
-const CANVAS_HEIGHT_VH = 72;
 const NOTHING_DRAWN = { nodes: [], edges: [] };
 
 const GraphError = ({ message }) => (
@@ -67,7 +62,6 @@ export const Graph = () => {
   const budget = getRenderBudget(result.view.nodes.length);
   const blocked = budget.status === BUDGET.BLOCKED;
   const visible = blocked ? NOTHING_DRAWN : result.view;
-  const positions = useMemo(() => layoutGraph(visible.nodes, visible.edges), [visible]);
   const index = useMemo(() => indexGraph(visible.nodes, visible.edges), [visible]);
   const kinds = useMemo(() => getKindOptions(graph.nodes), [graph.nodes]);
   const namespaceNames = useMemo(() => summary.namespaces.map((ns) => ns.name), [summary]);
@@ -76,14 +70,8 @@ export const Graph = () => {
   const highlightId = pickHighlightId(index, selection.selectedId, hoveredId);
   const lineage = useMemo(() => (highlightId ? getLineage(index, highlightId) : null), [index, highlightId]);
 
-  const flowNodes = useMemo(
-    () => buildFlowNodes({ nodes: visible.nodes, positions, colorMode, withoutComposition: summary.withoutComposition, partialCounts: result.partial }),
-    [visible.nodes, positions, colorMode, summary, result.partial]
-  );
-  const flowEdges = useMemo(() => buildFlowEdges(visible.edges), [visible.edges]);
   const highlightStore = useRef(createHighlightStore()).current;
   useEffect(() => highlightStore.set({ lineage, selectedId: selection.selectedId }), [highlightStore, lineage, selection.selectedId]);
-  const fitKey = useMemo(() => visible.nodes.map((n) => n.id).join(','), [visible.nodes]);
 
   const sliders = NODE_TYPES.filter((type) => result.matchedCounts[type] > 0).map((type) => ({
     type,
@@ -108,11 +96,11 @@ export const Graph = () => {
   const selectedNode = graph.nodes.find((n) => n.id === selection.selectedId);
 
   return (
-    <Box display="flex" flexDirection="column" position="relative">
+    <Box display="flex" flexDirection="column" position="relative" minW={0} minH="calc(100dvh - 88px)" pb={6}>
       <HStack justify="space-between" mb={4}>
         <Text fontSize="2xl" fontWeight="bold">Graph</Text>
         <Text fontSize="sm" color={muted}>
-          {visible.nodes.length} of {graph.nodes.length} nodes, {visible.edges.length} edges
+          {visible.nodes.length} of {graph.nodes.length} resources
           {refreshing && ' · Loading health...'}
           {!refreshing && !healthLoaded && ' · Health of Composed Resources not loaded'}
         </Text>
@@ -146,24 +134,33 @@ export const Graph = () => {
       )}
       {!showStatus && <Box mb={3}><GraphNotices notices={notices} /></Box>}
 
-      <Box css={lineage ? GRAPH_HIGHLIGHT_CSS : GRAPH_CANVAS_CSS} h={`${CANVAS_HEIGHT_VH}vh`} border="1px solid" borderColor={getBorderColor(colorMode)} borderRadius="md">
+      <Box css={{
+        '& .resource-row': { transition: 'opacity 0.15s' },
+        ...(lineage ? {
+          '& .resource-row:not(.in-lineage)': { opacity: 0.3, '&:focus-visible': { opacity: 1 } },
+          '& .column-connection:not(.in-lineage)': { strokeOpacity: 0.1, markerEnd: 'none' },
+        } : {}),
+      }}
+        flex={1} display="flex" flexDirection="column"
+        bg={getBackgroundColor(colorMode, colorMode === 'dark' ? 'primary' : 'tertiary')} border="1px solid"
+        borderColor={getBorderColor(colorMode)} borderRadius="xl" overflow="hidden">
         {blocked && <GraphBlocked count={budget.count} onUseDefaults={() => updateFilters({ limits: DEFAULT_LIMITS })} />}
         {!blocked && visible.nodes.length === 0 && <Text p={6} color={muted}>No resources match the current filters.</Text>}
         {!blocked && visible.nodes.length > 0 && (
           <GraphHighlightContext.Provider value={highlightStore}>
-            <GraphCanvas
-              nodes={flowNodes}
-              edges={flowEdges}
+            <ResourceColumns
+              nodes={visible.nodes}
+              edges={visible.edges}
+              types={NODE_TYPES.filter(type => filters.types.includes(type))}
               colorMode={colorMode}
-              fitKey={fitKey}
-              onNodeClick={(_, flowNode) => selection.toggleNode(flowNode.data.node)}
-              onNodeHover={onHover}
+              withoutComposition={summary.withoutComposition}
+              partialCounts={result.partial}
+              onSelect={selection.toggleNode}
+              onHover={onHover}
             />
           </GraphHighlightContext.Provider>
         )}
       </Box>
-
-      <GraphLegend />
 
       {selection.detailResource && (
         <Box flex="1" display="flex" flexDirection="column" mt={4} mb={8}>
