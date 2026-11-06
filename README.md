@@ -74,12 +74,27 @@ reload it. Failed collections are reported as unavailable or partial, and totals
 include successfully loaded resources only. Creation charts show surviving
 resources by creation date (UTC), not an audit log or historical health.
 
-The dashboard page and its dashboard-specific charts, layout, hooks, utilities,
-and overview use case are shared byte-for-byte with Crossview Enterprise. Keep
-their paths and contents identical when syncing changes between editions,
-including the existing `crossview.enterprise.dashboard.layout` browser storage
-key. Identical files reduce merge conflicts but do not guarantee conflict-free
-future merges.
+Dashboard panels and Graph columns show placeholders while their first snapshot
+loads; headers and controls stay visible. Recent snapshots are reused in memory
+for the same repository and Kubernetes context for 60 seconds. Older snapshots
+stay visible while a background request refreshes them, and refresh errors are
+shown without discarding the previous snapshot. Refresh explicitly reloads the
+snapshot; the backend may still serve managed resources from its own cache.
+The in-memory cache holds at most six snapshots, is cleared on logout, and does
+not survive a browser reload.
+
+The existing Graph search searches all loaded resources, including those
+hidden by display limits. Selecting a result or using Focus shows only that
+resource's relationship path, without unrelated rows. Focus takes precedence
+over name, kind, namespace, health, and type filters and shows the complete path
+up to the 10,000-resource rendering safety limit. Larger paths still use resource
+limits and show a partial-view warning. Use Show all resources to leave focus.
+
+The dashboard was originally copied byte-for-byte from Crossview Enterprise.
+The open-source loading and snapshot-cache improvements intentionally diverge
+from that copy; the enterprise repository is not modified. The existing
+`crossview.enterprise.dashboard.layout` browser storage key is retained to
+preserve saved panel preferences.
 
 ## Getting Started
 

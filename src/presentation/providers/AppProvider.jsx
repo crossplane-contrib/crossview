@@ -7,6 +7,7 @@ import { AuthService } from '../../domain/services/AuthService.js';
 import { UserService } from '../../domain/services/UserService.js';
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { colors } from '../utils/theme.js';
+import { clearSnapshots } from '../utils/snapshotCache.js';
 
 const AppContext = createContext(null);
 
@@ -265,6 +266,7 @@ export const AppProvider = ({ children }) => {
 
   const handleLogout = async () => {
     await authService.logout();
+    clearSnapshots(kubernetesRepository);
     setUser(null);
   };
 
@@ -305,4 +307,3 @@ export const AppProvider = ({ children }) => {
     </ChakraProvider>
   );
 };
-

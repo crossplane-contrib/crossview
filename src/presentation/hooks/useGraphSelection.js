@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 const toDetailResource = (node) => ({
   apiVersion: node.apiVersion,
@@ -14,11 +14,11 @@ export const useGraphSelection = () => {
   const [detailResource, setDetailResource] = useState(null);
   const [history, setHistory] = useState([]);
 
-  const clear = () => {
+  const clear = useCallback(() => {
     setSelectedId(null);
     setDetailResource(null);
     setHistory([]);
-  };
+  }, []);
 
   const toggleNode = (node) => {
     if (node.id === selectedId) {

@@ -1,5 +1,6 @@
 import { NODE_TYPE, NODE_TYPES, getKindKey, isUnhealthy } from './graphModel.js';
 import { keepOnly } from './graphFilters.js';
+import { BLOCKED_ABOVE } from './graphBudget.js';
 
 // What a slider can be set to. Past a couple of hundred nodes a column is too tall to read in one go.
 export const LIMIT_STEPS = [0, 5, 10, 20, 50, 100, 250, 500, 1000, 2000, 5000];
@@ -98,8 +99,12 @@ const buildPartialCounts = ({ matchedXRs, chosenXRs, matchedComposed, chosenComp
 
 // Keeps at most limits[type] nodes of each type from what the filters matched. Which ones: the
 // unhealthy first, then an even spread across kinds, with each shown XR's Composed Resources.
-export const applyLimits = (matched, limits, summary) => {
+export const applyLimits = (matched, limits, summary, focusId = null) => {
   const byType = Object.fromEntries(NODE_TYPES.map((type) => [type, ofType(matched.nodes, type)]));
+  if (focusId && matched.nodes.length <= BLOCKED_ABOVE) {
+    const counts = Object.fromEntries(NODE_TYPES.map(type => [type, byType[type].length]));
+    return { view: matched, shown: counts, matchedCounts: counts, limited: false, partial: new Map() };
+  }
   const matchedXRs = byType[NODE_TYPE.XR];
 
   const chosenXRs = chooseXRs(matchedXRs, limits[NODE_TYPE.XR]);
@@ -121,6 +126,12 @@ export const applyLimits = (matched, limits, summary) => {
     [NODE_TYPE.XR]: chosenXRs,
     [NODE_TYPE.COMPOSED]: chosenComposed,
   };
+  const focused = matched.nodes.find(node => node.id === focusId);
+  if (focused && !chosen[focused.type].some(node => node.id === focusId)) {
+    const list = chosen[focused.type];
+    if (list.length) list.pop();
+    list.unshift(focused);
+  }
   const keepIds = new Set(Object.values(chosen).flat().map((n) => n.id));
   const shown = Object.fromEntries(NODE_TYPES.map((type) => [type, chosen[type].length]));
   const matchedCounts = Object.fromEntries(NODE_TYPES.map((type) => [type, byType[type].length]));
