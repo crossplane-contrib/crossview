@@ -193,7 +193,27 @@
             "enabled": { "type": "boolean", "default": true },
             "size": { "type": "string", "default": "10Gi" }
           }
-        }
+        },
+        "strategy": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["RollingUpdate", "Recreate"],
+              "default": "Recreate"
+            },
+            "rollingUpdate": {
+              "type": "object",
+              "properties": {
+                "maxSurge": { "type": ["string", "integer"] },
+                "maxUnavailable": { "type": ["string", "integer"] }
+              }
+            }
+          }
+        },
+        "nodeSelector": { "type": "object" },
+        "affinity": { "type": "object" },
+        "tolerations": { "type": "array" }
       }
     },
     "config": {

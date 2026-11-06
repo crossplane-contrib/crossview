@@ -158,6 +158,13 @@ database:
     capabilities:
       drop:
         - ALL
+  # Recreate avoids rollouts hanging when the new pod lands on another node and
+  # cannot attach the ReadWriteOnce volume still held by the old pod.
+  strategy:
+    type: Recreate
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
 
 # Configuration
 config:

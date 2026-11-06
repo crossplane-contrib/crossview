@@ -10,6 +10,14 @@ metadata:
     app.kubernetes.io/component: postgres
 spec:
   replicas: 1
+  {{- $strategy := .Values.database.strategy | default dict }}
+  {{- $strategyType := $strategy.type | default "Recreate" }}
+  strategy:
+    type: {{ $strategyType }}
+    {{- if and (eq $strategyType "RollingUpdate") $strategy.rollingUpdate }}
+    rollingUpdate:
+      {{- toYaml $strategy.rollingUpdate | nindent 6 }}
+    {{- end }}
   selector:
     matchLabels:
       {{- include "crossview.selectorLabels" . | nindent 6 }}
@@ -88,6 +96,18 @@ spec:
             failureThreshold: 3
           resources:
             {{- toYaml .Values.database.resources | nindent 12 }}
+      {{- with .Values.database.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.database.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.database.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       volumes:
         {{- if .Values.database.persistence.enabled }}
         - name: postgres-storage

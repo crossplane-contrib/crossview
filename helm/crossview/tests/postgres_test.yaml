@@ -71,3 +71,100 @@ tests:
           content:
             name: POSTGRES_USER
             value: "postgres"
+  - it: should default to Recreate strategy
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+      - notExists:
+          path: spec.strategy.rollingUpdate
+      - notExists:
+          path: spec.template.spec.nodeSelector
+      - notExists:
+          path: spec.template.spec.affinity
+      - notExists:
+          path: spec.template.spec.tolerations
+
+  - it: should allow RollingUpdate strategy with rollingUpdate settings
+    set:
+      database:
+        strategy:
+          type: RollingUpdate
+          rollingUpdate:
+            maxSurge: 0
+            maxUnavailable: 1
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: RollingUpdate
+      - equal:
+          path: spec.strategy.rollingUpdate
+          value:
+            maxSurge: 0
+            maxUnavailable: 1
+
+  - it: should omit rollingUpdate settings when strategy is Recreate
+    set:
+      database:
+        strategy:
+          type: Recreate
+          rollingUpdate:
+            maxSurge: 1
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+      - notExists:
+          path: spec.strategy.rollingUpdate
+
+  - it: should render nodeSelector, affinity and tolerations for postgres
+    set:
+      database:
+        nodeSelector:
+          cloud.google.com/machine-family: n4
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: topology.kubernetes.io/zone
+                      operator: In
+                      values: ["zone-a"]
+        tolerations:
+          - key: dedicated
+            operator: Equal
+            value: db
+            effect: NoSchedule
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            cloud.google.com/machine-family: n4
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: topology.kubernetes.io/zone
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: dedicated
+            operator: Equal
+            value: db
+            effect: NoSchedule
+
+  - it: should not inherit app-level scheduling settings
+    set:
+      nodeSelector:
+        role: app
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - notExists:
+          path: spec.template.spec.nodeSelector
