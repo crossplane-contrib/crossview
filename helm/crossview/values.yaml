@@ -223,6 +223,8 @@ config:
   #   saml:
   #     enabled: true
   #     entryPoint: http://localhost:8080/realms/crossview/protocol/saml
+  #     providerName: "Company SSO"
+  #     providerIcon: "https://example.com/sso-icon.svg"
   #     issuer: crossview
   #     callbackURL: http://localhost:3001/api/auth/saml/callback
   #     usernameAttribute: http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name
@@ -232,11 +234,14 @@ config:
   sso:
     oidc:
       enabled: false
-      # Optional login-button branding; empty values use issuer-based defaults.
+      # Optional login-button branding; empty name defaults to OIDC.
       providerName: ""
       providerIcon: ""
     saml:
       enabled: false
+      # Optional login-button branding; empty name defaults to SAML.
+      providerName: ""
+      providerIcon: ""
 
   vite:
     server:
