@@ -286,6 +286,18 @@ spec:
                 configMapKeyRef:
                   name: {{ include "crossview.configMapName" . }}
                   key: SAML_ENTRY_POINT
+            - name: SAML_PROVIDER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "crossview.configMapName" . }}
+                  key: SAML_PROVIDER_NAME
+                  optional: true
+            - name: SAML_PROVIDER_ICON
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "crossview.configMapName" . }}
+                  key: SAML_PROVIDER_ICON
+                  optional: true
             - name: SAML_ISSUER
               valueFrom:
                 configMapKeyRef:

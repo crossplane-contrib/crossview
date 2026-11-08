@@ -1,5 +1,13 @@
 ## Unreleased
 
+### Features
+
+* **sso:** support configurable SAML provider names and icons through configuration, environment variables, and Helm.
+
+### Bug Fixes
+
+* **sso:** default the login-button provider name to OIDC when unset or blank instead of deriving it from the issuer URL (fixes #328).
+
 ### Performance Improvements
 
 * **dashboard:** request one managed resource and use the API total count; share composite and claim data across widgets without truncating health or namespace totals (refs #289).

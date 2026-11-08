@@ -118,6 +118,35 @@ disabled in this mode. To allow local password login alongside SSO, enable
 `database.enabled` controls only deployment of bundled PostgreSQL.
 See the [chart README](../helm/crossview/README.md) for a complete Secret example.
 
+### SSO login-button branding (OIDC and SAML)
+
+Both protocols accept optional branding in Helm values. Add the following to
+your existing provider configuration:
+
+```yaml
+config:
+  sso:
+    oidc:
+      providerName: "Company OIDC"
+      providerIcon: "https://idp.example.com/oidc-icon.svg"
+    saml:
+      providerName: "Company SAML"
+      providerIcon: "https://idp.example.com/saml-icon.svg"
+```
+
+Unset or blank names display "Sign in with OIDC" or "Sign in with SAML";
+names are not inferred from issuer URLs. Without a configured icon, OIDC uses
+the issuer origin's favicon when available, while SAML retains its default
+icon. A failed SAML icon also falls back to the default. URLs must be reachable
+by the user's browser.
+
+The chart emits `OIDC_PROVIDER_NAME`, `OIDC_PROVIDER_ICON`,
+`SAML_PROVIDER_NAME`, and `SAML_PROVIDER_ICON` in its ConfigMap.
+When using `config.ref`, add the corresponding keys to your external ConfigMap.
+Deployment references to these keys are optional, preserving compatibility
+with existing ConfigMaps. Branding does not enable either provider or implement
+SAML assertion validation. See the [SSO setup guide](SSO_SETUP.md).
+
 ### With header auth (no database)
 
 When Crossview is behind an authenticating proxy (OAuth2 Proxy, Ingress with auth) that sets the user in a header, use header auth and disable the database:

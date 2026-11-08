@@ -35,3 +35,33 @@ func TestOIDCProviderBranding(t *testing.T) {
 		t.Fatal("environment branding must override config file values")
 	}
 }
+
+func TestSAMLProviderBranding(t *testing.T) {
+	name, icon := viper.Get("sso.saml.providerName"), viper.Get("sso.saml.providerIcon")
+	t.Cleanup(func() {
+		viper.Set("sso.saml.providerName", name)
+		viper.Set("sso.saml.providerIcon", icon)
+	})
+	t.Setenv("SAML_PROVIDER_NAME", "")
+	t.Setenv("SAML_PROVIDER_ICON", "")
+	viper.Set("sso.saml.providerName", "")
+	viper.Set("sso.saml.providerIcon", "")
+	config := getSAMLConfig("true")
+	if config.ProviderName != "" || config.ProviderIcon != "" {
+		t.Fatal("branding defaults should remain empty")
+	}
+
+	viper.Set("sso.saml.providerName", "Company SAML")
+	viper.Set("sso.saml.providerIcon", "/images/company.svg")
+	config = getSAMLConfig("true")
+	if config.ProviderName != "Company SAML" || config.ProviderIcon != "/images/company.svg" {
+		t.Fatal("config file branding was not loaded")
+	}
+
+	t.Setenv("SAML_PROVIDER_NAME", "Environment SAML")
+	t.Setenv("SAML_PROVIDER_ICON", "https://example.com/icon.svg")
+	config = getSAMLConfig("true")
+	if config.ProviderName != "Environment SAML" || config.ProviderIcon != "https://example.com/icon.svg" {
+		t.Fatal("environment branding must override config file values")
+	}
+}

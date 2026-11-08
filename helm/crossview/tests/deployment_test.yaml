@@ -54,6 +54,24 @@ tests:
                 name: RELEASE-NAME-crossview-config
                 key: OIDC_PROVIDER_ICON
                 optional: true
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SAML_PROVIDER_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: RELEASE-NAME-crossview-config
+                key: SAML_PROVIDER_NAME
+                optional: true
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SAML_PROVIDER_ICON
+            valueFrom:
+              configMapKeyRef:
+                name: RELEASE-NAME-crossview-config
+                key: SAML_PROVIDER_ICON
+                optional: true
 
   - it: should use existing ConfigMap when config.ref is set
     set:
