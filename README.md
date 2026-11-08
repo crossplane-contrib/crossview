@@ -24,7 +24,7 @@
 </div>
 
 <p align="center">
-  <img src="public/images/new-screeenshot.png" alt="Crossview Dashboard"/>
+  <img src="public/images/scrossview-showcase.png" alt="Crossview Dashboard"/>
 </p>
 
 ### Demo Video

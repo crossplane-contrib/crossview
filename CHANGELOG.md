@@ -1,16 +1,32 @@
-## Unreleased
+# [4.8.0-rc.1](https://github.com/crossplane-contrib/crossview/compare/v4.7.0...v4.8.0-rc.1) (2026-11-08)
+
+First release candidate for 4.8.0, covering dashboard and Graph improvements,
+loading optimizations, sidebar persistence, and SSO branding. Includes #326,
+#330, #331, and #332; unmerged PostgreSQL chart changes in #327 and #329 are
+not included.
 
 ### Features
 
-* **sso:** support configurable SAML provider names and icons through configuration, environment variables, and Helm.
+* **dashboard:** refresh the dashboard with summary panels, charts, and a configurable panel layout ([#330](https://github.com/crossplane-contrib/crossview/pull/330))
+* **graph:** replace the canvas with connected resource columns while preserving relationships; improve styling, spacing, and content-height sizing ([#330](https://github.com/crossplane-contrib/crossview/pull/330))
+* **graph:** hide unrelated resources when focusing a lineage and enhance the existing search with matching-resource selection from the loaded snapshot ([#331](https://github.com/crossplane-contrib/crossview/pull/331))
+* **loading:** display dashboard panel and Graph column placeholders while keeping the Graph header and controls available ([#331](https://github.com/crossplane-contrib/crossview/pull/331))
+* **sso:** support configurable SAML provider names and icons through configuration, environment variables, and Helm; retain the default SAML icon when a custom icon is absent or fails to load ([#332](https://github.com/crossplane-contrib/crossview/pull/332))
 
 ### Bug Fixes
 
-* **sso:** default the login-button provider name to OIDC when unset or blank instead of deriving it from the issuer URL (fixes #328).
+* **sidebar:** persist the collapsed state across reloads and restore it before the initial render to avoid an expanded-to-collapsed flash ([#330](https://github.com/crossplane-contrib/crossview/pull/330))
+* **sso:** default the login-button provider name to OIDC when unset or blank instead of deriving it from the issuer URL; fixes [#328](https://github.com/crossplane-contrib/crossview/issues/328) ([#332](https://github.com/crossplane-contrib/crossview/pull/332))
 
 ### Performance Improvements
 
-* **dashboard:** request one managed resource and use the API total count; share composite and claim data across widgets without truncating health or namespace totals (refs #289).
+* **dashboard:** request one managed resource and use the API total count; share composite and claim data across widgets without truncating health or namespace totals; refs [#289](https://github.com/crossplane-contrib/crossview/issues/289) ([#326](https://github.com/crossplane-contrib/crossview/pull/326))
+* **cache:** reuse in-memory dashboard and Graph snapshots during navigation, display cached data immediately, and retain stale data during background refresh; cache is not persisted across page reloads ([#331](https://github.com/crossplane-contrib/crossview/pull/331))
+
+### Documentation
+
+* **ui:** document dashboard customization, connected Graph columns, loading states, and cached navigation ([#330](https://github.com/crossplane-contrib/crossview/pull/330), [#331](https://github.com/crossplane-contrib/crossview/pull/331))
+* **sso:** update configuration examples and SSO/Helm guides for protocol-label defaults, SAML branding, and environment overrides ([#332](https://github.com/crossplane-contrib/crossview/pull/332))
 
 # [4.7.0](https://github.com/crossplane-contrib/crossview/compare/v4.6.0...v4.7.0) (2026-10-26)
 
