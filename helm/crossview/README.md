@@ -90,6 +90,8 @@ The following table lists the configurable parameters and their default values:
 | `image.tag`                      | Image tag (leave empty for Chart.AppVersion)                                | `""` (uses chart version)                  |
 | `app.replicas`                   | Number of replicas                                                          | `1`                                        |
 | `database.enabled`               | Enable bundled PostgreSQL                                                   | `true`                                     |
+| `database.nodeSelector`          | Node selector for the bundled PostgreSQL pod                                | `{}`                                       |
+| `database.tolerations`           | Tolerations for the bundled PostgreSQL pod                                  | `[]`                                       |
 | `config.database.enabled`        | Enable application database access; independent of bundled PostgreSQL       | `true`                                     |
 | `config.sso.oidc.providerName`    | Optional OIDC login-button name; defaults to OIDC when empty                 | `""`                                       |
 | `config.sso.oidc.providerIcon`    | Optional browser-accessible icon URL; issuer favicon when empty             | `""`                                       |
@@ -251,6 +253,26 @@ findings are in upstream's `gosu` binary, not in Crossview). No newer
 upstream tag clears them yet; the floating tag picks up a fixed rebuild
 automatically once published. For production, use an external database
 as shown above.
+
+### Bundled PostgreSQL scheduling
+
+`database.nodeSelector` and `database.tolerations` apply only to the bundled
+PostgreSQL pod; the Crossview deployment is scheduled independently.
+
+```yaml
+database:
+  nodeSelector:
+    disktype: ssd
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: postgres
+      effect: NoSchedule
+```
+
+The selected nodes must be compatible with the node or zone affinity of any
+existing PostgreSQL PVC, otherwise the pod stays `Pending`. Changing these
+settings does not migrate database data.
 
 ## Context Alias Labels
 
