@@ -66,7 +66,9 @@ export const getLineage = (index, id) => {
   const lineage = new Set([...descendants, ...reachable(id, index.up)]);
   const descendantXRs = [...descendants].filter((n) => isType(index, n, NODE_TYPE.XR));
 
-  if (isType(index, id, NODE_TYPE.XR)) addDefinitionsBehind(index, lineage, descendantXRs);
+  if (isType(index, id, NODE_TYPE.XR) || isType(index, id, NODE_TYPE.COMPOSED)) {
+    addDefinitionsBehind(index, lineage, [...lineage].filter(nodeId => isType(index, nodeId, NODE_TYPE.XR)));
+  }
   else addXRsComposing(index, lineage, descendantXRs);
   return lineage;
 };
@@ -74,4 +76,5 @@ export const getLineage = (index, id) => {
 // A selection wins over hover so the highlight does not change while the pointer moves. A selected
 // node that is not on screen, because a limit hid it, highlights nothing instead of fading everything.
 export const pickHighlightId = (index, selectedId, hoveredId) =>
-  (selectedId && index.typeOf.has(selectedId) ? selectedId : null) || hoveredId || null;
+  (selectedId && index.typeOf.has(selectedId) ? selectedId : null)
+  || (hoveredId && index.typeOf.has(hoveredId) ? hoveredId : null);

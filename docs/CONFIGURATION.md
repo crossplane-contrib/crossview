@@ -227,15 +227,21 @@ When running in `session` auth mode with the database enabled, a default admin a
 
 ## SSO Configuration
 
-Optional OIDC login-button branding:
+Optional OIDC and SAML login-button branding:
 
 | Config file setting | Environment variable | Default |
 |---------------------|----------------------|---------|
-| `sso.oidc.providerName` | `OIDC_PROVIDER_NAME` | Inferred from issuer, otherwise "SSO" |
+| `sso.oidc.providerName` | `OIDC_PROVIDER_NAME` | "OIDC" when unset or blank |
 | `sso.oidc.providerIcon` | `OIDC_PROVIDER_ICON` | Issuer origin's `/favicon.ico`, if available |
+| `sso.saml.providerName` | `SAML_PROVIDER_NAME` | "SAML" when unset or blank |
+| `sso.saml.providerIcon` | `SAML_PROVIDER_ICON` | Default SAML icon |
 
 Use a browser-accessible icon URL, preferably HTTPS or a same-origin path.
-Helm values use the same settings under `config.sso.oidc`.
+Environment variables override file settings. Helm values use the same settings
+under `config.sso.oidc` and `config.sso.saml`. Names are not inferred from issuer
+URLs. SAML does not infer a favicon from its issuer; an empty or unavailable
+icon retains the default SAML icon. Branding is public UI metadata, not secrets,
+and does not enable SSO or change authentication behavior.
 
 ### OpenID Connect (OIDC)
 
@@ -243,11 +249,14 @@ Enable OIDC authentication:
 
 ```yaml
 sso:
+  enabled: true
   oidc:
     enabled: true
     issuer: https://your-provider.com/realms/your-realm
     clientId: your-client-id
     clientSecret: your-client-secret
+    providerName: "" # Optional; defaults to OIDC
+    providerIcon: "" # Optional; defaults to issuer favicon
     callbackURL: http://localhost:3001/api/auth/oidc/callback
 ```
 
@@ -259,10 +268,13 @@ Enable SAML authentication:
 
 ```yaml
 sso:
+  enabled: true
   saml:
     enabled: true
     entryPoint: https://your-idp.com/sso/saml
     issuer: crossview
+    providerName: "" # Optional; defaults to SAML
+    providerIcon: "" # Optional; defaults to SAML icon
     cert: /path/to/certificate.pem
     callbackURL: http://localhost:3001/api/auth/saml/callback
 ```

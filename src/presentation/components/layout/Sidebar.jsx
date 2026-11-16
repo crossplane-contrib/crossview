@@ -15,20 +15,21 @@ import appPackageJson from '../../../../package.json';
 import { useVersionCheck } from '../../hooks/useVersionCheck.js';
 import { FiArrowUp } from 'react-icons/fi';
 
-export const Sidebar = ({ onToggle, onResize }) => {
+export const Sidebar = ({ onToggle, onResize, initialCollapsed = false, transitionsEnabled = true }) => {
   const appVersion = appPackageJson.version;
   const updateInfo = useVersionCheck(appVersion);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
   const [width, setWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
   const [compositeResourceKinds, setCompositeResourceKinds] = useState([]);
   const [loadingCompositeKinds, setLoadingCompositeKinds] = useState(false);
-  const [contextSidebarWidth, setContextSidebarWidth] = useState(80);
   const sidebarRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { kubernetesRepository, selectedContext, colorMode, selectedContextError, isInClusterMode, authMode } = useAppContext();
+  const [contextSidebarWidth, setContextSidebarWidth] = useState(() =>
+    isInClusterMode || localStorage.getItem('contextSidebarCollapsed') === 'true' ? 0 : 60);
   useEffect(() => {
     if (isInClusterMode) {
       setContextSidebarWidth(0);
@@ -59,8 +60,16 @@ export const Sidebar = ({ onToggle, onResize }) => {
   }, [isCollapsed, width, onToggle, onResize]);
 
   const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
+    setIsCollapsed(previous => !previous);
   };
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('sidebarCollapsed', String(isCollapsed));
+    } catch (error) {
+      console.warn('Failed to save sidebar collapse state:', error);
+    }
+  }, [isCollapsed]);
 
   const handleMouseDown = (e) => {
     e.preventDefault();
@@ -147,7 +156,7 @@ export const Sidebar = ({ onToggle, onResize }) => {
 
   const menuItems = useMemo(() => ([
     { id: 'dashboard', label: 'Dashboard', icon: FiLayout, path: '/' },
-    { id: 'graph', label: 'Graph', icon: FiShare2, path: '/graph', tooltip: 'How XRDs, Compositions, Composite Resources and Functions relate' },
+    { id: 'graph', label: 'Graph', icon: FiShare2, path: '/graph', tooltip: 'Browse related resources in columns' },
     // Core Crossplane Resources (building blocks)
     { id: 'providers', label: 'Providers', icon: FiPackage, path: '/providers', tooltip: 'Crossplane providers that extend Kubernetes capabilities' },
     { id: 'functions', label: 'Functions', icon: FiCode, path: '/functions', tooltip: 'Crossplane Functions - composable building blocks for Compositions' },
@@ -225,7 +234,7 @@ export const Sidebar = ({ onToggle, onResize }) => {
           borderColor: `${getBorderColor('dark')} !important`,
         }
       }}
-      transition={isResizing ? 'none' : 'width 0.2s, left 0.2s'}
+      transition={isResizing || !transitionsEnabled ? 'none' : 'width 0.2s, left 0.2s'}
       position="fixed"
       left={`${isInClusterMode ? 0 : contextSidebarWidth}px`}
       top={0}
@@ -663,6 +672,8 @@ export const Sidebar = ({ onToggle, onResize }) => {
 };
 
 Sidebar.propTypes = {
+  transitionsEnabled: PropTypes.bool,
+  initialCollapsed: PropTypes.bool,
   onToggle: PropTypes.func,
   onResize: PropTypes.func,
 };

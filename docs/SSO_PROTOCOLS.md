@@ -46,6 +46,8 @@ sso:
     issuer: https://your-provider.com/realms/your-realm
     clientId: your-client-id
     clientSecret: your-client-secret
+    providerName: "" # Optional; defaults to OIDC when blank
+    providerIcon: "" # Optional; defaults to issuer favicon
     callbackURL: http://localhost:3001/api/auth/oidc/callback
 ```
 
@@ -83,6 +85,8 @@ sso:
     enabled: true
     entryPoint: https://your-provider.com/saml/sso
     issuer: your-application-issuer-name
+    providerName: "" # Optional; defaults to SAML when blank
+    providerIcon: "" # Optional; defaults to SAML icon
     callbackURL: http://localhost:3001/api/auth/saml/callback
     cert: |-
       -----BEGIN CERTIFICATE-----
@@ -91,6 +95,14 @@ sso:
 ```
 
 ## Key Differences
+
+Both protocols support optional `providerName` and `providerIcon` login-button
+branding. Environment overrides are `OIDC_PROVIDER_NAME`/`OIDC_PROVIDER_ICON`
+and `SAML_PROVIDER_NAME`/`SAML_PROVIDER_ICON`; Helm settings are under
+`config.sso.oidc` and `config.sso.saml`. Without a name, the protocol label is
+shown rather than an issuer-derived name. SAML does not infer a favicon from its
+issuer. Branding does not change protocol support or assertion validation.
+See [SSO setup](SSO_SETUP.md) for details.
 
 | Feature | OIDC | SAML |
 |---------|------|------|
@@ -184,4 +196,3 @@ The SAML implementation uses:
 - **Provider-agnostic** - not tied to Keycloak or any specific provider
 
 The implementation follows the standards, so it should work with any IDP that properly implements OIDC or SAML 2.0.
-

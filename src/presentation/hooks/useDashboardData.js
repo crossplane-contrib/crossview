@@ -1,96 +1,53 @@
-import { useState, useEffect } from 'react';
+import { createContext, useState, useEffect } from 'react';
 import { GetCompositeResourcesUseCase } from '../../domain/usecases/GetCompositeResourcesUseCase.js';
 import { GetClaimsUseCase } from '../../domain/usecases/GetClaimsUseCase.js';
-import { GetCompositeResourceDefinitionsUseCase } from '../../domain/usecases/GetCompositeResourceDefinitionsUseCase.js';
-import { GetCompositionsUseCase } from '../../domain/usecases/GetCompositionsUseCase.js';
-import { GetProvidersUseCase } from '../../domain/usecases/GetProvidersUseCase.js';
 
-/**
- * Custom hook that fetches all dashboard data in parallel
- * This eliminates duplicate API calls and significantly improves performance
- */
+export const DashboardDataContext = createContext(null);
+
+const emptyResult = (loading) => ({ items: [], loading, error: null });
+
 export const useDashboardData = (kubernetesRepository, selectedContext) => {
-  const [data, setData] = useState({
-    compositeResources: null,
-    claims: null,
-    xrds: null,
-    compositions: null,
-    providers: null,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const context = typeof selectedContext === 'string' ? selectedContext : selectedContext?.name;
+  const [state, setState] = useState(null);
 
   useEffect(() => {
-    const loadData = async () => {
-      if (!selectedContext) {
-        setLoading(false);
-        return;
-      }
+    let active = true;
+    if (!context) {
+      return () => { active = false; };
+    }
 
+    setState({
+      context,
+      repository: kubernetesRepository,
+      compositeResources: emptyResult(true),
+      claims: emptyResult(true),
+    });
+
+    const load = async (key, UseCase) => {
+      let result;
       try {
-        setLoading(true);
-        setError(null);
-        const contextName = typeof selectedContext === 'string' 
-          ? selectedContext 
-          : selectedContext.name || selectedContext;
-
-        // Fetch all resources in parallel with minimal limits for dashboard
-        const [
-          compositeResourcesResult,
-          claimsResult,
-          xrds,
-          compositions,
-          providers,
-        ] = await Promise.all([
-          new GetCompositeResourcesUseCase(kubernetesRepository)
-            .execute(contextName, 10, null)
-            .catch(err => {
-              console.warn('Failed to fetch composite resources:', err.message);
-              return { items: [] };
-            }),
-          new GetClaimsUseCase(kubernetesRepository)
-            .execute(contextName, 10, null)
-            .catch(err => {
-              console.warn('Failed to fetch claims:', err.message);
-              return { items: [] };
-            }),
-          new GetCompositeResourceDefinitionsUseCase(kubernetesRepository)
-            .execute(contextName)
-            .catch(err => {
-              console.warn('Failed to fetch XRDs:', err.message);
-              return [];
-            }),
-          new GetCompositionsUseCase(kubernetesRepository)
-            .execute(contextName)
-            .catch(err => {
-              console.warn('Failed to fetch compositions:', err.message);
-              return [];
-            }),
-          new GetProvidersUseCase(kubernetesRepository)
-            .execute(contextName)
-            .catch(err => {
-              console.warn('Failed to fetch providers:', err.message);
-              return [];
-            }),
-        ]);
-
-        setData({
-          compositeResources: Array.isArray(compositeResourcesResult) ? compositeResourcesResult : (compositeResourcesResult?.items || []),
-          claims: Array.isArray(claimsResult) ? claimsResult : (claimsResult?.items || []),
-          xrds,
-          compositions,
-          providers,
-        });
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+        const response = await new UseCase(kubernetesRepository).execute(context, null, null);
+        result = { items: Array.isArray(response) ? response : response.items, loading: false, error: null };
+      } catch (error) {
+        console.warn(`Failed to fetch dashboard ${key}:`, error.message);
+        result = { items: [], loading: false, error: error.message };
+      }
+      if (active) {
+        setState(previous => ({ ...previous, [key]: result }));
       }
     };
 
-    loadData();
-  }, [selectedContext, kubernetesRepository]);
+    load('compositeResources', GetCompositeResourcesUseCase);
+    load('claims', GetClaimsUseCase);
 
-  return { data, loading, error };
+    return () => { active = false; };
+  }, [context, kubernetesRepository]);
+
+  if (state?.context !== context || state?.repository !== kubernetesRepository || !context) {
+    return {
+      compositeResources: emptyResult(Boolean(context)),
+      claims: emptyResult(Boolean(context)),
+    };
+  }
+  return state;
 };
-

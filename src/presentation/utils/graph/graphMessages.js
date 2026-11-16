@@ -35,7 +35,7 @@ export const describeView = ({ summary, result }) => {
 };
 
 export const describeBlocked = (budget) =>
-  `Not drawn: ${formatCount(budget.count)} nodes is over the limit of ${formatCount(BLOCKED_ABOVE)}. Open this to lower a limit.`;
+  `Not shown: ${formatCount(budget.count)} resources is over the limit of ${formatCount(BLOCKED_ABOVE)}. Open this to lower a limit.`;
 
 // The line shown while the panel is closed. A limited view says so up front, as a warning.
 export const describeHeadline = ({ summary, result, budget }) => {
@@ -75,20 +75,20 @@ export const buildNotices = ({ summary, backendWarnings, budget }) => {
     notices.push({
       id: 'over-budget',
       severity: SEVERITY.WARNING,
-      message: `That would draw ${formatCount(budget.count)} nodes. The page does not draw more than ${formatCount(BLOCKED_ABOVE)}, because it gets slow and can run out of memory.`,
+      message: `That would show ${formatCount(budget.count)} resources. The page does not show more than ${formatCount(BLOCKED_ABOVE)}, because it gets slow and can run out of memory.`,
     });
   } else if (budget.status === BUDGET.SLOW) {
     notices.push({
       id: 'slow',
       severity: SEVERITY.WARNING,
-      message: `Drawing ${formatCount(budget.count)} nodes can take a few seconds to appear and use a lot of memory.`,
+      message: `Showing ${formatCount(budget.count)} resources can take a few seconds to appear and use a lot of memory.`,
     });
   }
 
   const unresolved = summary.unresolved;
   if (unresolved > 0) {
     const subject = unresolved === 1 ? '1 resource is referenced but its status is unknown, so it has' : `${formatCount(unresolved)} resources are referenced but their status is unknown, so they have`;
-    notices.push({ id: 'unresolved', severity: SEVERITY.WARNING, message: `${subject} a dashed yellow border. It may be missing or not managed by Crossplane.` });
+    notices.push({ id: 'unresolved', severity: SEVERITY.WARNING, message: `${subject} an orange marker. It may be missing or not managed by Crossplane.` });
   }
 
   const orphans = summary.withoutComposition.size;

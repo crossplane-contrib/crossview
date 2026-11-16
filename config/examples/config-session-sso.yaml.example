@@ -48,10 +48,12 @@ sso:
     emailAttribute: email
     firstNameAttribute: given_name
     lastNameAttribute: family_name
-    providerName: Keycloak
-    providerIcon: "" # Optional browser-accessible icon URL
+    providerName: Keycloak # Optional login-button label; defaults to OIDC when empty
+    providerIcon: "" # Optional icon URL; defaults to the issuer origin's favicon
   saml:
     enabled: true
+    providerName: "" # Optional login-button label; defaults to SAML when empty
+    providerIcon: "" # Optional browser-accessible icon URL
     entryPoint: http://localhost:8080/realms/crossview/protocol/saml
     issuer: crossview-saml
     cert: |-

@@ -13,7 +13,7 @@ export const GraphBlocked = ({ count, onUseDefaults }) => {
     <Box p={8} textAlign="center">
       <MdWarning size={32} color={getHealthColor('warning')} style={{ margin: '0 auto' }} />
       <Text mt={3} fontWeight="medium">
-        The graph is not drawn: {formatCount(count)} nodes is more than the {formatCount(BLOCKED_ABOVE)} limit.
+        Resources are not shown: {formatCount(count)} resources is more than the {formatCount(BLOCKED_ABOVE)} limit.
       </Text>
       <Text mt={1} fontSize="sm" color={muted}>
         More than that gets slow and can run out of memory. Lower a slider above, or add a filter.

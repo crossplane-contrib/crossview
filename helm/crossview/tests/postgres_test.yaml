@@ -71,3 +71,65 @@ tests:
           content:
             name: POSTGRES_USER
             value: "postgres"
+
+  - it: should omit the node selector by default
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - notExists:
+          path: spec.template.spec.nodeSelector
+
+  - it: should set the node selector when configured
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+      database:
+        nodeSelector:
+          disktype: ssd
+          kubernetes.io/os: linux
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            disktype: ssd
+            kubernetes.io/os: linux
+
+  - it: should omit tolerations by default
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - notExists:
+          path: spec.template.spec.tolerations
+
+  - it: should set tolerations when configured
+    set:
+      secrets:
+        dbPassword: test-password
+        sessionSecret: test-secret
+      database:
+        tolerations:
+          - key: dedicated
+            operator: Equal
+            value: postgres
+            effect: NoSchedule
+    template: postgres.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: dedicated
+              operator: Equal
+              value: postgres
+              effect: NoSchedule

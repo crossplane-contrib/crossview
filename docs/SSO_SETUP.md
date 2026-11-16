@@ -97,8 +97,8 @@ sso:
 In Helm, use `config.sso.oidc.providerName` and
 `config.sso.oidc.providerIcon`.
 
-When the name is empty, the UI infers a provider name from the issuer and
-falls back to "SSO". When the icon is empty, it uses the issuer origin's
+When the name is unset or blank, the UI displays "Sign in with OIDC" instead
+of inferring a label from the issuer URL. When the icon is empty, it uses the issuer origin's
 `/favicon.ico`, if an issuer is configured. Explicit branding is useful for
 split-horizon configurations without an issuer. Icon URLs must be reachable
 by the user's browser; prefer HTTPS or a same-origin asset path. These values
@@ -137,6 +137,23 @@ Because a non-empty `issuer` makes discovery override the explicit endpoints, sp
 
 Works with any SAML 2.0 provider (Okta, Azure AD, OneLogin, ADFS, etc.)
 
+SAML supports the same optional login-button branding as OIDC:
+
+```yaml
+sso:
+  saml:
+    providerName: "Company SSO"
+    providerIcon: "/images/company-sso.svg"
+```
+
+`SAML_PROVIDER_NAME` and `SAML_PROVIDER_ICON` override these file settings.
+In Helm, use `config.sso.saml.providerName` and `config.sso.saml.providerIcon`.
+An unset or blank name displays "Sign in with SAML". An unset, blank, or
+unavailable icon uses the default SAML icon. Unlike OIDC, SAML does not infer
+an icon from its issuer, which is an identifier rather than necessarily a URL.
+Icon URLs must be reachable by the user's browser. These branding settings
+do not change authentication endpoints or SAML validation.
+
 ```yaml
 sso:
   enabled: true
@@ -144,6 +161,8 @@ sso:
     enabled: true
     entryPoint: https://your-provider.com/saml/sso
     issuer: your-application-issuer-name
+    providerName: "Company SSO" # Optional; defaults to SAML when empty
+    providerIcon: "https://example.com/sso-icon.svg" # Optional browser-accessible URL
     callbackURL: http://localhost:3001/api/auth/saml/callback
     cert: |-
       -----BEGIN CERTIFICATE-----

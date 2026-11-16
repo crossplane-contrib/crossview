@@ -1,54 +1,14 @@
 import { Box, Text, VStack, HStack, Spinner } from '@chakra-ui/react';
-import { useEffect, useState, useMemo } from 'react';
-import { useAppContext } from '../../providers/AppProvider.jsx';
-import { GetCompositeResourcesUseCase } from '../../../domain/usecases/GetCompositeResourcesUseCase.js';
-import { GetClaimsUseCase } from '../../../domain/usecases/GetClaimsUseCase.js';
+import { useContext, useMemo } from 'react';
+import { DashboardDataContext } from '../../hooks/useDashboardData.js';
 import { Container } from '../common/Container.jsx';
 
 export const RecentActivityWidget = () => {
-  const { kubernetesRepository, selectedContext } = useAppContext();
-  const [compositeResources, setCompositeResources] = useState([]);
-  const [claims, setClaims] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (!selectedContext) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-        const contextName = typeof selectedContext === 'string' 
-          ? selectedContext 
-          : selectedContext.name || selectedContext;
-        
-        const [compositeData, claimsData] = await Promise.all([
-          new GetCompositeResourcesUseCase(kubernetesRepository)
-            .execute(contextName, 20, null)
-            .catch(() => ({ items: [] })),
-          new GetClaimsUseCase(kubernetesRepository)
-            .execute(contextName, 20, null)
-            .catch(() => ({ items: [] })),
-        ]);
-        
-        setCompositeResources(Array.isArray(compositeData) ? compositeData : (compositeData?.items || []));
-        setClaims(Array.isArray(claimsData) ? claimsData : (claimsData?.items || []));
-      } catch (err) {
-        console.warn('Failed to fetch recent activity:', err.message);
-        setError(err.message);
-        setCompositeResources([]);
-        setClaims([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [selectedContext, kubernetesRepository]);
+  const { compositeResources: compositeData, claims: claimsData } = useContext(DashboardDataContext);
+  const compositeResources = compositeData.items;
+  const claims = claimsData.items;
+  const loading = compositeData.loading || claimsData.loading;
+  const error = compositeData.error || claimsData.error;
 
   const recentResources = useMemo(() => {
     const allResources = [
@@ -130,4 +90,3 @@ export const RecentActivityWidget = () => {
     </Container>
   );
 };
-

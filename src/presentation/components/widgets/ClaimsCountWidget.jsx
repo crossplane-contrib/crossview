@@ -1,44 +1,10 @@
-import { Box, Text, VStack, Spinner } from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
-import { useAppContext } from '../../providers/AppProvider.jsx';
-import { GetClaimsUseCase } from '../../../domain/usecases/GetClaimsUseCase.js';
+import { Text, Spinner } from '@chakra-ui/react';
+import { useContext } from 'react';
+import { DashboardDataContext } from '../../hooks/useDashboardData.js';
 import { Container } from '../common/Container.jsx';
 
 export const ClaimsCountWidget = () => {
-  const { kubernetesRepository, selectedContext } = useAppContext();
-  const [claims, setClaims] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (!selectedContext) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-        const contextName = typeof selectedContext === 'string' 
-          ? selectedContext 
-          : selectedContext.name || selectedContext;
-        
-        const data = await new GetClaimsUseCase(kubernetesRepository)
-          .execute(contextName, null, null);
-        const items = Array.isArray(data) ? data : (data?.items || []);
-        setClaims(items);
-      } catch (err) {
-        console.warn('Failed to fetch claims:', err.message);
-        setError(err.message);
-        setClaims([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [selectedContext, kubernetesRepository]);
+  const { claims: { items: claims, loading, error } } = useContext(DashboardDataContext);
 
   const count = (claims || []).length;
 
@@ -67,4 +33,3 @@ export const ClaimsCountWidget = () => {
     </Container>
   );
 };
-

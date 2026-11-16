@@ -40,6 +40,8 @@ type SAMLConfig struct {
 	EmailAttribute     string
 	FirstNameAttribute string
 	LastNameAttribute  string
+	ProviderName       string
+	ProviderIcon       string
 }
 
 func GetSSOConfig(env Env) SSOConfig {
@@ -162,6 +164,16 @@ func getSAMLConfig(enabledStr string) SAMLConfig {
 			os.Getenv("SAML_ENTRY_POINT"),
 			viper.GetString("sso.saml.entryPoint"),
 			"http://localhost:8080/realms/crossview/protocol/saml",
+		),
+		ProviderName: firstNonEmpty(
+			os.Getenv("SAML_PROVIDER_NAME"),
+			viper.GetString("sso.saml.providerName"),
+			"",
+		),
+		ProviderIcon: firstNonEmpty(
+			os.Getenv("SAML_PROVIDER_ICON"),
+			viper.GetString("sso.saml.providerIcon"),
+			"",
 		),
 		Issuer: firstNonEmpty(
 			os.Getenv("SAML_ISSUER"),

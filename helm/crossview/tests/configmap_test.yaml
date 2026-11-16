@@ -135,6 +135,10 @@ tests:
             clientId: my-client
             providerName: "Company SSO"
             providerIcon: "https://example.com/icon.svg"
+          saml:
+            enabled: true
+            providerName: "Company SAML"
+            providerIcon: "/images/saml.svg"
       secrets:
         dbPassword: test-password
         sessionSecret: test-secret
@@ -172,6 +176,21 @@ tests:
       - equal:
           path: data.OIDC_PROVIDER_ICON
           value: "https://example.com/icon.svg"
+      - equal:
+          path: data.SAML_PROVIDER_NAME
+          value: "Company SAML"
+      - equal:
+          path: data.SAML_PROVIDER_ICON
+          value: "/images/saml.svg"
+
+  - it: should default SAML branding to empty values
+    asserts:
+      - equal:
+          path: data.SAML_PROVIDER_NAME
+          value: ""
+      - equal:
+          path: data.SAML_PROVIDER_ICON
+          value: ""
 
   - it: should support session SSO without an application database
     set:

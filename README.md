@@ -24,7 +24,7 @@
 </div>
 
 <p align="center">
-  <img src="public/images/new-screeenshot.png" alt="Crossview Dashboard"/>
+  <img src="public/images/scrossview-showcase.png" alt="Crossview Dashboard"/>
 </p>
 
 ### Demo Video
@@ -60,11 +60,41 @@
 - **Real-Time Resource Watching**: Monitor any Kubernetes resource in real-time with event-driven updates using Kubernetes Informers
 - **Multi-Cluster Support**: Manage and switch between multiple Kubernetes contexts seamlessly
 - **Resource Visualization**: Browse and visualize Crossplane resources (providers, XRDs, compositions, claims, etc.)
+- **Resource Graph**: Browse theme-aware list columns arranged as XRDs, compositions, functions above composite resources in a shared column, and composed resources. Compositions connect directly to the adjacent functions and composite resources; composite resources connect directly to composed resources, with spacious connection gutters and filled-circle endpoints. Hover or focus a row to highlight its connections and related resources, or select it to open details. Filters and resource limits remain available; there is no graph canvas, panning, or zooming.
+- **Infrastructure Dashboard**: View snapshot metrics, readiness and creation charts, namespace distribution, package health, composition usage, resources needing attention, and recently created resources. Use the Panels menu to show or hide panels, reorder them, resize them, or reset the layout; preferences are saved in your browser.
 - **Resource Details**: View comprehensive resource information including status conditions, metadata, events, and relationships
 - **Modern UI**: Built with React and Chakra UI with dark mode support
+- **Persistent Navigation**: The main sidebar remembers whether it is collapsed or expanded across page reloads in the same browser.
 - **High Performance**: Backend built with Go and Gin framework for optimal performance
 - **WebSocket Support**: Real-time updates via WebSocket connections
 - **SSO Integration**: Support for OIDC and SAML authentication
+
+The dashboard loads a snapshot for the selected Kubernetes context; use Refresh to
+reload it. Failed collections are reported as unavailable or partial, and totals
+include successfully loaded resources only. Creation charts show surviving
+resources by creation date (UTC), not an audit log or historical health.
+
+Dashboard panels and Graph columns show placeholders while their first snapshot
+loads; headers and controls stay visible. Recent snapshots are reused in memory
+for the same repository and Kubernetes context for 60 seconds. Older snapshots
+stay visible while a background request refreshes them, and refresh errors are
+shown without discarding the previous snapshot. Refresh explicitly reloads the
+snapshot; the backend may still serve managed resources from its own cache.
+The in-memory cache holds at most six snapshots, is cleared on logout, and does
+not survive a browser reload.
+
+The existing Graph search searches all loaded resources, including those
+hidden by display limits. Selecting a result or using Focus shows only that
+resource's relationship path, without unrelated rows. Focus takes precedence
+over name, kind, namespace, health, and type filters and shows the complete path
+up to the 10,000-resource rendering safety limit. Larger paths still use resource
+limits and show a partial-view warning. Use Show all resources to leave focus.
+
+The dashboard was originally copied byte-for-byte from Crossview Enterprise.
+The open-source loading and snapshot-cache improvements intentionally diverge
+from that copy; the enterprise repository is not modified. The existing
+`crossview.enterprise.dashboard.layout` browser storage key is retained to
+preserve saved panel preferences.
 
 ## Getting Started
 

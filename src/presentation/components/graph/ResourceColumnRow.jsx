@@ -1,7 +1,6 @@
 import { Box, Text, HStack, Badge } from '@chakra-ui/react';
-import { Handle, Position } from '@xyflow/react';
 import PropTypes from 'prop-types';
-import { getBackgroundColor, getTextColor } from '../../utils/theme.js';
+import { getBackgroundColor, getBorderColor, getTextColor } from '../../utils/theme.js';
 import { getHealthColor } from '../common/ResourceRelations/utils.js';
 import { NODE_TYPE_COLORS } from './graphEdgeStyles.js';
 import { graphNodeShape } from './graphPropTypes.js';
@@ -45,24 +44,39 @@ const NoCompositionBadge = () => (
   </Badge>
 );
 
-export const GraphNode = ({ data }) => {
+export const ResourceColumnRow = ({ data, onSelect, onHover }) => {
   const { node, colorMode, noComposition, partial } = data;
   const inLineage = useIsInLineage(node.id);
   const selected = useIsSelected(node.id);
 
   return (
     <Box
-      className={`graph-node${inLineage ? ' in-lineage' : ''}`}
-      w="240px"
+      as="button"
+      type="button"
+      data-resource-id={node.id}
+      className={`resource-row${inLineage ? ' in-lineage' : ''}`}
+      w="100%"
+      textAlign="left"
+      cursor="pointer"
       px={3}
-      py={2}
-      borderRadius="md"
-      bg={getBackgroundColor(colorMode, 'primary')}
-      border={selected ? '3px solid' : '2px solid'}
-      borderColor={borderColorOf(node)}
+      py={3}
+      bg={getBackgroundColor(colorMode, selected ? 'tertiary' : 'header')}
+      borderBottom="1px solid"
+      borderColor={getBorderColor(colorMode)}
+      borderLeft="3px solid"
+      borderLeftColor={borderColorOf(node)}
+      outline={selected ? `2px solid ${borderColorOf(node)}` : undefined}
+      outlineOffset="-2px"
+      _hover={{ bg: getBackgroundColor(colorMode, 'secondary') }}
+      _focusVisible={{ outline: `2px solid ${borderColorOf(node)}`, outlineOffset: '-2px' }}
+      aria-pressed={selected}
+      onClick={() => onSelect(node)}
+      onMouseEnter={() => onHover(node.id)}
+      onMouseLeave={() => onHover(null)}
+      onFocus={() => onHover(node.id)}
+      onBlur={() => onHover(null)}
       title={describeProblem(node) || undefined}
     >
-      <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
       <HStack justify="space-between" gap={2}>
         <Text fontSize="xs" color={getTextColor(colorMode, 'muted')} truncate minW={0} title={node.wraps ? `${node.kind} wrapping a ${node.wraps}` : node.apiVersion}>
           {kindTitle(node)}
@@ -83,12 +97,13 @@ export const GraphNode = ({ data }) => {
           {formatCount(partial.shown)} of {formatCount(partial.total)} {noun(partial.total, partial.label)}
         </Text>
       )}
-      <Handle type="source" position={Position.Right} style={{ opacity: 0 }} />
     </Box>
   );
 };
 
-GraphNode.propTypes = {
+ResourceColumnRow.propTypes = {
+  onSelect: PropTypes.func.isRequired,
+  onHover: PropTypes.func.isRequired,
   data: PropTypes.shape({
     node: graphNodeShape.isRequired,
     colorMode: PropTypes.string,

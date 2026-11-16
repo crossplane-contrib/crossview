@@ -70,8 +70,8 @@ func TestSSOController_GetStatus(t *testing.T) {
 	mockService.GetSSOStatusFunc = func() lib.SSOConfig {
 		return lib.SSOConfig{
 			Enabled: true,
-			OIDC:    lib.OIDCConfig{Enabled: true},
-			SAML:    lib.SAMLConfig{Enabled: false},
+			OIDC:    lib.OIDCConfig{Enabled: true, ProviderName: "Company OIDC", ProviderIcon: "/images/oidc.svg"},
+			SAML:    lib.SAMLConfig{Enabled: true, ProviderName: "Company SAML", ProviderIcon: "/images/saml.svg"},
 		}
 	}
 
@@ -94,6 +94,39 @@ func TestSSOController_GetStatus(t *testing.T) {
 
 	if enabled, ok := response["enabled"].(bool); !ok || !enabled {
 		t.Error("Expected SSO to be enabled")
+	}
+	for protocol, name := range map[string]string{"oidc": "Company OIDC", "saml": "Company SAML"} {
+		provider, ok := response[protocol].(map[string]interface{})
+		if !ok {
+			t.Fatalf("Expected %s status object", protocol)
+		}
+		if provider["enabled"] != true || provider["providerName"] != name || provider["providerIcon"] != "/images/"+protocol+".svg" {
+			t.Errorf("Unexpected %s branding: %v", protocol, provider)
+		}
+	}
+}
+
+func TestSSOController_GetStatusDefaultBranding(t *testing.T) {
+	router := setupTestRouter()
+	controller := NewSSOController(setupTestLogger(), setupTestEnv(), setupMockSSOService())
+	router.GET("/api/auth/sso/status", controller.GetStatus)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/auth/sso/status", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected OK status, got %d", w.Code)
+	}
+	var response map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	for _, protocol := range []string{"oidc", "saml"} {
+		provider, ok := response[protocol].(map[string]interface{})
+		if !ok {
+			t.Fatalf("Expected %s status object", protocol)
+		}
+		if provider["enabled"] != false || provider["providerName"] != "" || provider["providerIcon"] != "" {
+			t.Errorf("Unexpected %s defaults: %v", protocol, provider)
+		}
 	}
 }
 

@@ -12,7 +12,7 @@ export const keepOnly = ({ nodes, edges }, keep) => {
 
 // Focus keeps only the focused node's lineage, the same chain that selecting it highlights.
 const focusOnLineage = (view, focusId) => {
-  if (!focusId || !view.nodes.some((n) => n.id === focusId)) return view;
+  if (!view.nodes.some((n) => n.id === focusId)) return { nodes: [], edges: [] };
   const lineage = getLineage(indexGraph(view.nodes, view.edges), focusId);
   return keepOnly(view, (n) => lineage.has(n.id));
 };
@@ -61,11 +61,14 @@ const hideImpliedXRDEdges = (edges) => {
 };
 
 export const applyGraphFilters = (graph, filters) => {
+  if (filters.focus) {
+    const view = focusOnLineage(graph, filters.focus);
+    return { nodes: view.nodes, edges: hideImpliedXRDEdges(view.edges) };
+  }
   const shownTypes = new Set(filters.types);
   const matches = createAttributeMatcher(filters);
 
   let view = keepOnly(graph, (n) => shownTypes.has(n.type));
-  view = focusOnLineage(view, filters.focus);
   view = keepOnly(view, (n) => n.id === filters.focus || matches(n));
   if (filters.health) view = dropCompositionsWithoutXR(view, filters.focus);
   if (filters.namespace) view = keepDefinitionsLeadingToInstances(view);

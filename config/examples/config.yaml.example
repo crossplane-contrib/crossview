@@ -54,11 +54,13 @@ sso:
     emailAttribute: email
     firstNameAttribute: given_name
     lastNameAttribute: family_name
-    providerName: "" # Optional login-button label; inferred from issuer when empty
+    providerName: "" # Optional login-button label; defaults to OIDC when empty
     providerIcon: "" # Optional icon URL; defaults to the issuer origin's favicon
   # SAML 2.0 Configuration
   saml:
     enabled: false
+    providerName: "" # Optional login-button label; defaults to SAML when empty
+    providerIcon: "" # Optional browser-accessible icon URL
     entryPoint: http://localhost:8080/realms/crossview/protocol/saml
     issuer: crossview
     cert: null

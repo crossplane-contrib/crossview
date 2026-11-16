@@ -22,7 +22,8 @@ export const GraphHighlightContext = createContext(createHighlightStore());
 
 const useHighlightValue = (select) => {
   const store = useContext(GraphHighlightContext);
-  return useSyncExternalStore(store.subscribe, () => select(store.getState()));
+  const getSnapshot = () => select(store.getState());
+  return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
 };
 
 export const useIsInLineage = (...ids) =>

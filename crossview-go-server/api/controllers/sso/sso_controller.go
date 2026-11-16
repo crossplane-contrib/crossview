@@ -37,7 +37,9 @@ func (c *SSOController) GetStatus(ctx *gin.Context) {
 			"providerIcon": ssoConfig.OIDC.ProviderIcon,
 		},
 		"saml": gin.H{
-			"enabled": ssoConfig.SAML.Enabled,
+			"enabled":      ssoConfig.SAML.Enabled,
+			"providerName": ssoConfig.SAML.ProviderName,
+			"providerIcon": ssoConfig.SAML.ProviderIcon,
 		},
 	})
 }

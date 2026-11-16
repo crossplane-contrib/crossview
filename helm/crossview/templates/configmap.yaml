@@ -49,6 +49,8 @@ data:
   OIDC_FIRSTNAME_ATTRIBUTE: {{ .Values.config.sso.oidc.firstNameAttribute | default "given_name" | quote }}
   OIDC_LASTNAME_ATTRIBUTE: {{ .Values.config.sso.oidc.lastNameAttribute | default "family_name" | quote }}
   SAML_ENABLED: {{ .Values.config.sso.saml.enabled | default false | quote }}
+  SAML_PROVIDER_NAME: {{ .Values.config.sso.saml.providerName | default "" | quote }}
+  SAML_PROVIDER_ICON: {{ .Values.config.sso.saml.providerIcon | default "" | quote }}
   SAML_ENTRY_POINT: {{ .Values.config.sso.saml.entryPoint | default "http://localhost:8080/realms/crossview/protocol/saml" | quote }}
   SAML_ISSUER: {{ .Values.config.sso.saml.issuer | default "crossview" | quote }}
   SAML_CALLBACK_URL: {{ .Values.config.sso.saml.callbackURL | default "http://localhost:3001/api/auth/saml/callback" | quote }}

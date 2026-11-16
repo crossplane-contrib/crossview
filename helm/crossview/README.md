@@ -90,9 +90,13 @@ The following table lists the configurable parameters and their default values:
 | `image.tag`                      | Image tag (leave empty for Chart.AppVersion)                                | `""` (uses chart version)                  |
 | `app.replicas`                   | Number of replicas                                                          | `1`                                        |
 | `database.enabled`               | Enable bundled PostgreSQL                                                   | `true`                                     |
+| `database.nodeSelector`          | Node selector for the bundled PostgreSQL pod                                | `{}`                                       |
+| `database.tolerations`           | Tolerations for the bundled PostgreSQL pod                                  | `[]`                                       |
 | `config.database.enabled`        | Enable application database access; independent of bundled PostgreSQL       | `true`                                     |
-| `config.sso.oidc.providerName`    | Optional OIDC login-button name; inferred from issuer when empty            | `""`                                       |
+| `config.sso.oidc.providerName`    | Optional OIDC login-button name; defaults to OIDC when empty                 | `""`                                       |
 | `config.sso.oidc.providerIcon`    | Optional browser-accessible icon URL; issuer favicon when empty             | `""`                                       |
+| `config.sso.saml.providerName`    | Optional SAML login-button name; defaults to SAML when empty                 | `""`                                       |
+| `config.sso.saml.providerIcon`    | Optional browser-accessible SAML icon URL; uses the default icon when empty  | `""`                                       |
 | `config.ref`                     | Reference existing ConfigMap (skips chart-generated config)                 | `""`                                       |
 | `config.server.contextAliases`   | Map of kube context names to short UI labels                                | `{}`                                        |
 | `config.server.managed.cacheTTLSeconds` | Managed resources cache TTL per context (seconds)                 | `300`                                       |
@@ -149,10 +153,30 @@ button, and the "Or continue with" divider are hidden. For both local password
 login and SSO, keep `config.database.enabled: true` and configure PostgreSQL.
 Set `database.enabled: false` alone when using an external PostgreSQL server.
 
-Branding is emitted as `OIDC_PROVIDER_NAME` and `OIDC_PROVIDER_ICON` in the
+OIDC branding is emitted as `OIDC_PROVIDER_NAME` and `OIDC_PROVIDER_ICON` in the
 ConfigMap and consumed by the Deployment. With `config.ref`, add these keys to
 your external ConfigMap to customize branding; missing keys are optional and
 retain the UI defaults. See [SSO setup](../../docs/SSO_SETUP.md) for details.
+
+### SAML login-button branding
+
+Add these optional settings to your existing SAML configuration:
+
+```yaml
+config:
+  sso:
+    saml:
+      providerName: "Company SSO"
+      providerIcon: "https://idp.example.com/sso-icon.svg"
+```
+
+These values are emitted as `SAML_PROVIDER_NAME` and `SAML_PROVIDER_ICON`.
+If using `config.ref`, add those keys to the external ConfigMap. The Deployment
+references are optional, so older ConfigMaps remain compatible. An unset or
+blank name displays "Sign in with SAML"; an unset or unavailable icon retains
+the default SAML icon. SAML does not derive names or icons from its issuer.
+Icon URLs must be browser-accessible. Branding does not enable SAML or implement
+assertion validation; see the [SSO guide](../../docs/SSO_SETUP.md).
 
 ## Secret handling modes
 
@@ -229,6 +253,26 @@ findings are in upstream's `gosu` binary, not in Crossview). No newer
 upstream tag clears them yet; the floating tag picks up a fixed rebuild
 automatically once published. For production, use an external database
 as shown above.
+
+### Bundled PostgreSQL scheduling
+
+`database.nodeSelector` and `database.tolerations` apply only to the bundled
+PostgreSQL pod; the Crossview deployment is scheduled independently.
+
+```yaml
+database:
+  nodeSelector:
+    disktype: ssd
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: postgres
+      effect: NoSchedule
+```
+
+The selected nodes must be compatible with the node or zone affinity of any
+existing PostgreSQL PVC, otherwise the pod stays `Pending`. Changing these
+settings does not migrate database data.
 
 ## Context Alias Labels
 

@@ -84,6 +84,8 @@ export const loadConfig = (configPath = null) => {
         userInfoURL: process.env.OIDC_USERINFO_URL || fileConfig.sso?.oidc?.userInfoURL || '',
         callbackURL: process.env.OIDC_CALLBACK_URL || fileConfig.sso?.oidc?.callbackURL || 'http://localhost:3001/api/auth/oidc/callback',
         scope: process.env.OIDC_SCOPE || fileConfig.sso?.oidc?.scope || 'openid profile email',
+        providerName: process.env.OIDC_PROVIDER_NAME || fileConfig.sso?.oidc?.providerName || '',
+        providerIcon: process.env.OIDC_PROVIDER_ICON || fileConfig.sso?.oidc?.providerIcon || '',
         usernameAttribute: process.env.OIDC_USERNAME_ATTRIBUTE || fileConfig.sso?.oidc?.usernameAttribute || 'preferred_username',
         emailAttribute: process.env.OIDC_EMAIL_ATTRIBUTE || fileConfig.sso?.oidc?.emailAttribute || 'email',
         firstNameAttribute: process.env.OIDC_FIRSTNAME_ATTRIBUTE || fileConfig.sso?.oidc?.firstNameAttribute || 'given_name',
@@ -92,6 +94,8 @@ export const loadConfig = (configPath = null) => {
       saml: {
         enabled: process.env.SAML_ENABLED === 'true' || fileConfig.sso?.saml?.enabled === true,
         entryPoint: process.env.SAML_ENTRY_POINT || fileConfig.sso?.saml?.entryPoint || 'http://localhost:8080/realms/crossview/protocol/saml',
+        providerName: process.env.SAML_PROVIDER_NAME || fileConfig.sso?.saml?.providerName || '',
+        providerIcon: process.env.SAML_PROVIDER_ICON || fileConfig.sso?.saml?.providerIcon || '',
         issuer: process.env.SAML_ISSUER || fileConfig.sso?.saml?.issuer || 'crossview',
         callbackURL: process.env.SAML_CALLBACK_URL || fileConfig.sso?.saml?.callbackURL || 'http://localhost:3001/api/auth/saml/callback',
         cert: process.env.SAML_CERT || fileConfig.sso?.saml?.cert || null,
@@ -163,4 +167,3 @@ export const updateConfig = (section, sectionConfig) => {
 export const resetConfig = () => {
   config = null;
 };
-

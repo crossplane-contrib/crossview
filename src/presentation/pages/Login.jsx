@@ -20,33 +20,19 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
   const [authState, setAuthState] = useState(null);
   const [ssoStatus, setSsoStatus] = useState(null);
+  const [failedSamlIcon, setFailedSamlIcon] = useState(null);
 
   const ssoIssuer = ssoStatus?.oidc?.issuer || '';
-  const providerName = ssoStatus?.oidc?.providerName || (() => {
-    const lower = ssoIssuer.toLowerCase();
-    if (lower.includes('keycloak')) return 'Keycloak';
-    if (lower.includes('okta')) return 'Okta';
-    if (lower.includes('auth0')) return 'Auth0';
-    if (lower.includes('azure') || lower.includes('microsoft')) return 'Microsoft Entra';
-    if (lower.includes('google')) return 'Google';
-    if (lower.includes('gitlab')) return 'GitLab';
-    if (lower.includes('github')) return 'GitHub';
-    try {
-      const host = new URL(ssoIssuer).hostname;
-      if (host === 'localhost' || host === '127.0.0.1' || /^\d+\.\d+\.\d+\.\d+$/.test(host)) {
-        return 'SSO';
-      }
-      return host.charAt(0).toUpperCase() + host.slice(1);
-    } catch {
-      return 'SSO';
-    }
-  })();
+  const providerName = ssoStatus?.oidc?.providerName?.trim() || 'OIDC';
   const providerIcon = ssoStatus?.oidc?.providerIcon || (() => {
     try { return `${new URL(ssoIssuer).origin}/favicon.ico`; } catch { return ''; }
   })();
   const databaseEnabled = authState?.databaseEnabled === true;
   const oidcEnabled = ssoStatus?.oidc?.enabled === true;
   const samlEnabled = ssoStatus?.saml?.enabled === true;
+  const samlProviderName = ssoStatus?.saml?.providerName?.trim() || 'SAML';
+  const samlProviderIcon = ssoStatus?.saml?.providerIcon?.trim() || '';
+  const showSamlIcon = Boolean(samlProviderIcon) && failedSamlIcon !== samlProviderIcon;
 
   useEffect(() => {
     if (user) {
@@ -400,14 +386,28 @@ export const Login = () => {
                           w="20px"
                           h="20px"
                           borderRadius="sm"
-                          bg="green.500"
+                          bg={showSamlIcon ? 'transparent' : 'green.500'}
                           display="flex"
                           alignItems="center"
                           justifyContent="center"
                         >
-                          <Text color="white" fontSize="xs" fontWeight="bold">S</Text>
+                          {showSamlIcon ? (
+                            <img
+                              src={samlProviderIcon}
+                              alt={`${samlProviderName} icon`}
+                              width="20"
+                              height="20"
+                              style={{ objectFit: 'contain', display: 'block' }}
+                              onError={() => {
+                                console.warn('Failed to load SAML provider icon.');
+                                setFailedSamlIcon(samlProviderIcon);
+                              }}
+                            />
+                          ) : (
+                            <Text color="white" fontSize="xs" fontWeight="bold">S</Text>
+                          )}
                         </Box>
-                        Sign in with SAML
+                        Sign in with {samlProviderName}
                       </Button>
                     )}
                   </VStack>
