@@ -254,6 +254,26 @@ upstream tag clears them yet; the floating tag picks up a fixed rebuild
 automatically once published. For production, use an external database
 as shown above.
 
+### Bundled PostgreSQL scheduling
+
+`database.nodeSelector` and `database.tolerations` apply only to the bundled
+PostgreSQL pod; the Crossview deployment is scheduled independently.
+
+```yaml
+database:
+  nodeSelector:
+    disktype: ssd
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: postgres
+      effect: NoSchedule
+```
+
+The selected nodes must be compatible with the node or zone affinity of any
+existing PostgreSQL PVC, otherwise the pod stays `Pending`. Changing these
+settings does not migrate database data.
+
 ## Context Alias Labels
 
 To display short labels for long context names in the UI, set `config.server.contextAliases`:

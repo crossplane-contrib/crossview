@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+* **chart:** add `database.nodeSelector` and `database.tolerations` to schedule the bundled PostgreSQL pod independently of the Crossview deployment ([#327](https://github.com/crossplane-contrib/crossview/pull/327))
+
 # [4.8.0-rc.1](https://github.com/crossplane-contrib/crossview/compare/v4.7.0...v4.8.0-rc.1) (2026-11-08)
 
 First release candidate for 4.8.0, covering dashboard and Graph improvements,
