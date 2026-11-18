@@ -2,7 +2,7 @@
 
 ### Bug Fixes
 
-* **chart:** default the bundled PostgreSQL Deployment to the `Recreate` strategy so rollouts no longer hang on `ReadWriteOnce` volumes; configurable via `database.strategy` ([#36](https://github.com/crossplane-contrib/crossview/issues/36))
+* **chart:** default the bundled PostgreSQL Deployment to the `Recreate` strategy so rollouts no longer hang on `ReadWriteOnce` volumes; configurable via `database.strategy`. Note that `Recreate` makes the bundled database briefly unavailable whenever its pod is replaced ([#36](https://github.com/crossplane-contrib/crossview/issues/36))
 
 ### Features
 

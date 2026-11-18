@@ -191,6 +191,7 @@ helm install crossview crossview/crossview \
 | `ingress.enabled` | Enable Ingress | `false` |
 | `database.enabled` | Enable PostgreSQL | `true` |
 | `database.persistence.size` | Database storage size | `10Gi` |
+| `database.strategy.type` | Bundled PostgreSQL rollout strategy (`Recreate` or `RollingUpdate`) | `Recreate` |
 
 ### Using Values File
 
@@ -285,6 +286,14 @@ helm upgrade crossview oci://ghcr.io/crossplane-contrib/crossview-chart/crossvie
   --set secrets.dbPassword=your-password \
   --set secrets.sessionSecret=your-session-secret
 ```
+
+> **Bundled PostgreSQL downtime:** the bundled PostgreSQL Deployment uses the
+> `Recreate` strategy, so whenever an upgrade replaces the PostgreSQL pod the
+> database is unavailable until the new pod is ready (data on the PVC is
+> kept). This avoids rollouts hanging on the `ReadWriteOnce` volume. See
+> [Bundled PostgreSQL rollout strategy](../helm/crossview/README.md#bundled-postgresql-rollout-strategy)
+> for details and how to override it, e.g.
+> `--set database.strategy.type=RollingUpdate`.
 
 ### View Upgrade History
 

@@ -90,7 +90,8 @@ The following table lists the configurable parameters and their default values:
 | `image.tag`                      | Image tag (leave empty for Chart.AppVersion)                                | `""` (uses chart version)                  |
 | `app.replicas`                   | Number of replicas                                                          | `1`                                        |
 | `database.enabled`               | Enable bundled PostgreSQL                                                   | `true`                                     |
-| `database.strategy.type`         | Bundled PostgreSQL rollout strategy (`Recreate` or `RollingUpdate`)         | `Recreate`                                 |
+| `database.strategy.type`         | Bundled PostgreSQL rollout strategy (`Recreate` or `RollingUpdate`); `Recreate` causes brief DB downtime on pod replacement, see [rollout strategy](#bundled-postgresql-rollout-strategy) | `Recreate` |
+| `database.strategy.rollingUpdate` | `maxSurge` / `maxUnavailable`; only used when `type` is `RollingUpdate`    | unset                                      |
 | `database.nodeSelector`          | Node selector for the bundled PostgreSQL pod                                | `{}`                                       |
 | `database.affinity`              | Affinity rules for the bundled PostgreSQL pod                               | `{}`                                       |
 | `database.tolerations`           | Tolerations for the bundled PostgreSQL pod                                  | `[]`                                       |
@@ -258,13 +259,22 @@ as shown above.
 
 ### Bundled PostgreSQL scheduling
 
-`database.nodeSelector` and `database.tolerations` apply only to the bundled
-PostgreSQL pod; the Crossview deployment is scheduled independently.
+`database.nodeSelector`, `database.affinity`, and `database.tolerations` apply
+only to the bundled PostgreSQL pod; the Crossview deployment is scheduled
+independently.
 
 ```yaml
 database:
   nodeSelector:
     disktype: ssd
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: In
+                values: ["zone-a"]
   tolerations:
     - key: dedicated
       operator: Equal
@@ -275,6 +285,46 @@ database:
 The selected nodes must be compatible with the node or zone affinity of any
 existing PostgreSQL PVC, otherwise the pod stays `Pending`. Changing these
 settings does not migrate database data.
+
+### Bundled PostgreSQL rollout strategy
+
+The bundled PostgreSQL Deployment uses the `Recreate` strategy by default.
+Its data lives on a single `ReadWriteOnce` volume, so with `RollingUpdate`
+a rollout hangs whenever the replacement pod is scheduled on a different
+node: the volume stays attached to the old pod, which is not terminated
+until the new one is ready.
+
+**`Recreate` causes database downtime during every PostgreSQL pod
+replacement** (chart upgrades that change the pod template, image updates,
+configuration changes). The old pod is terminated before the new one
+starts, so PostgreSQL is unavailable until the new pod is ready, and
+Crossview features that depend on the database (for example session login)
+are unavailable during that window. Data on the PVC is preserved. Plan
+upgrades accordingly, or use an external database if you need zero-downtime
+upgrades.
+
+If your storage supports attaching the volume to the new pod while the old
+one is still running (for example `ReadWriteMany`, or a single-node
+cluster), you can opt back into `RollingUpdate`. `rollingUpdate` is only
+rendered when `type` is `RollingUpdate`:
+
+```yaml
+database:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+```
+
+or on the command line:
+
+```bash
+helm upgrade crossview ./helm/crossview \
+  --namespace crossview \
+  --reuse-values \
+  --set database.strategy.type=RollingUpdate
+```
 
 ## Context Alias Labels
 
