@@ -158,8 +158,18 @@ database:
     capabilities:
       drop:
         - ALL
+  # Recreate avoids rollouts hanging when the new pod lands on another node and
+  # cannot attach the ReadWriteOnce volume still held by the old pod.
+  # Note: Recreate stops the old pod before starting the new one, so the
+  # database is briefly unavailable on every pod replacement. Set type to
+  # RollingUpdate (optionally with rollingUpdate.maxSurge/maxUnavailable)
+  # only if your storage allows the volume to be attached by both pods.
+  strategy:
+    type: Recreate
   # Node selector for the bundled PostgreSQL pod
   nodeSelector: {}
+  # Affinity rules for the bundled PostgreSQL pod
+  affinity: {}
   # Tolerations for the bundled PostgreSQL pod
   tolerations: []
 

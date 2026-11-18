@@ -194,11 +194,34 @@
             "size": { "type": "string", "default": "10Gi" }
           }
         },
+        "strategy": {
+          "type": "object",
+          "description": "Rollout strategy for the bundled PostgreSQL Deployment",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["RollingUpdate", "Recreate"],
+              "default": "Recreate"
+            },
+            "rollingUpdate": {
+              "type": "object",
+              "properties": {
+                "maxSurge": { "type": ["string", "integer"] },
+                "maxUnavailable": { "type": ["string", "integer"] }
+              }
+            }
+          }
+        },
         "nodeSelector": {
           "type": "object",
           "description": "Node selector for the bundled PostgreSQL pod",
           "default": {},
           "additionalProperties": { "type": "string" }
+        },
+        "affinity": {
+          "type": "object",
+          "description": "Affinity rules for the bundled PostgreSQL pod",
+          "default": {}
         },
         "tolerations": {
           "type": "array",
